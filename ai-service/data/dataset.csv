@@ -1,0 +1,41 @@
+title,description,category,priority,department
+Wi-Fi not working,Internet has stopped working in Computer Lab 3 since morning. Cannot access lab resources.,IT_NETWORK,HIGH,IT & Network Services
+No internet access,Corridor Wi-Fi access point in Block B is down and showing red light.,IT_NETWORK,MEDIUM,IT & Network Services
+Router offline,Hostel Block 1 router power indicator is off and internet disconnected.,IT_NETWORK,HIGH,IT & Network Services
+Network cable damaged,Ethernet port near desk 14 in Library study room is physically broken.,IT_NETWORK,LOW,IT & Network Services
+Slow Wi-Fi speed,Library Wi-Fi connection speed is extremely slow and dropping packets.,IT_NETWORK,LOW,IT & Network Services
+Server connection error,Lab 2 computer terminals cannot connect to local campus server.,IT_NETWORK,HIGH,IT & Network Services
+Switchboard sparking,Electrical switchboard near Room 204 is loose and producing sparks when toggled.,ELECTRICAL,HIGH,Electrical Maintenance
+Ceiling fan not spinning,Fan in Lecture Hall 101 is not rotating and humming loudly.,ELECTRICAL,MEDIUM,Electrical Maintenance
+Tube light flickering,Corridor lights on 3rd floor are flickering constantly causing disturbance.,ELECTRICAL,LOW,Electrical Maintenance
+Power outage in Hostel,Entire ground floor of Hostel Block B has lost power completely.,ELECTRICAL,CRITICAL,Electrical Maintenance
+Exposed live wire,Exposed high-voltage wire hanging near main entrance walkway. Very dangerous.,ELECTRICAL,CRITICAL,Electrical Maintenance
+AC not cooling,Air conditioner in Seminar Hall 2 is blowing warm air only.,ELECTRICAL,MEDIUM,Electrical Maintenance
+Water pipe leakage,Major water leakage from supply pipe near second floor washroom flooding corridor.,PLUMBING,HIGH,Plumbing & Sanitation
+Washroom tap broken,Water tap in CS Department 1st floor washroom is broken and water is wasting.,PLUMBING,MEDIUM,Plumbing & Sanitation
+Toilet flush malfunctioning,Washroom flush valve on 3rd floor is stuck and constantly running water.,PLUMBING,MEDIUM,Plumbing & Sanitation
+Water logging in basement,Heavy water accumulation in mechanical building basement due to drain blockage.,PLUMBING,HIGH,Plumbing & Sanitation
+No water supply in hostel,Hostel Block A has no running water supply in bathrooms since 6 AM.,PLUMBING,HIGH,Plumbing & Sanitation
+Clogged drainage sink,Chemistry lab sink drain is completely clogged and overflowing with water.,PLUMBING,MEDIUM,Plumbing & Sanitation
+Classroom dirty,Classroom 302 has trash on floor and uncleaned whiteboards from yesterday.,CLEANING,LOW,Housekeeping & Cleaning
+Dustbins overflowing,Waste dustbins near canteen area are completely full and overflowing.,CLEANING,LOW,Housekeeping & Cleaning
+Washroom unhygienic,Main building ground floor washroom requires urgent cleaning and sanitization.,CLEANING,MEDIUM,Housekeeping & Cleaning
+Spilled liquid in corridor,Spilled coffee liquid on stairway near library causing slipping hazard.,CLEANING,MEDIUM,Housekeeping & Cleaning
+Hostel room window broken,Window glass pane in Hostel Room 112 is broken and letting rain inside.,HOSTEL,MEDIUM,Infrastructure & Facilities
+Bed frame damaged,Hostel bed wooden slats broken in Room 205.,HOSTEL,LOW,Infrastructure & Facilities
+Classroom projector failure,Projector in Room 204 does not display image and shows lamp error.,CLASSROOM,HIGH,Infrastructure & Facilities
+Desk chair broken,Student desk chair in Lecture Hall 3 has broken leg.,CLASSROOM,LOW,Infrastructure & Facilities
+Whiteboard damaged,Whiteboard in Room 105 is scratched badly and unusable.,CLASSROOM,LOW,Infrastructure & Facilities
+Lab equipment faulty,Oscilloscope in Electronics Lab 1 power supply fails repeatedly.,LABORATORY,MEDIUM,IT & Network Services
+Microscope light broken,Biology lab microscope bulb blown out.,LABORATORY,LOW,IT & Network Services
+Library air conditioning bad,Library 2nd floor reading hall is very hot due to AC failure.,LIBRARY,MEDIUM,Infrastructure & Facilities
+Unauthorized person seen,Unknown person wandering near girl's hostel without ID badge.,SECURITY,CRITICAL,Campus Security
+CCTV camera blind,CCTV camera near sports complex parking is tilted down and misaligned.,SECURITY,MEDIUM,Campus Security
+Door lock damaged,Main door lock of Server Room 2 is jammed.,SECURITY,HIGH,Campus Security
+Buzzer alarming,Fire alarm sensor beep sounding repeatedly in Library basement without fire.,SECURITY,HIGH,Campus Security
+College shuttle bus late,Morning shuttle transport bus from station arrived 40 minutes late.,TRANSPORT,LOW,Infrastructure & Facilities
+Canteen food hygiene issue,Unwashed utensils found in student canteen lunch counter.,CANTEEN,MEDIUM,Housekeeping & Cleaning
+Broken stair handrail,Staircase handrail between 1st and 2nd floor is loose and wobbly.,INFRASTRUCTURE,MEDIUM,Infrastructure & Facilities
+Cracked ceiling plaster,Ceiling plaster peeling off and falling in Chemistry lecture theatre.,INFRASTRUCTURE,HIGH,Infrastructure & Facilities
+Door handle broken,Main entrance door handle of Admin office broken off.,INFRASTRUCTURE,LOW,Infrastructure & Facilities
+Noise disturbance,Loud construction drilling sound near examination hall during exam hours.,OTHER,MEDIUM,Infrastructure & Facilities
