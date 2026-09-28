@@ -66,14 +66,14 @@ const apiLimiter = rateLimit({
 
 app.use('/api', apiLimiter);
 
-// API Route Mounts
-app.use('/api/health', healthRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/complaints', complaintRoutes);
-app.use('/api/departments', departmentRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/users', userRoutes);
+// API Route Mounts (supports both /api/* and root /*)
+app.use(['/api/health', '/health'], healthRoutes);
+app.use(['/api/auth', '/auth'], authRoutes);
+app.use(['/api/complaints', '/complaints'], complaintRoutes);
+app.use(['/api/departments', '/departments'], departmentRoutes);
+app.use(['/api/notifications', '/notifications'], notificationRoutes);
+app.use(['/api/analytics', '/analytics'], analyticsRoutes);
+app.use(['/api/users', '/users'], userRoutes);
 
 // 404 Route Fallback
 app.use('*', (req, res) => {
