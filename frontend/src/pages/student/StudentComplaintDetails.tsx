@@ -9,6 +9,7 @@ import { AttachmentGallery } from '../../components/complaint/AttachmentGallery'
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { UpvoteButton } from '../../components/complaint/UpvoteButton';
 import { SlaCountdownBadge } from '../../components/complaint/SlaCountdownBadge';
+import { FeedbackBanner } from '../../components/complaint/FeedbackBanner';
 import { ArrowLeft, MapPin, Calendar, CheckCircle2, RefreshCw, Send, MessageSquare, Wrench, AlertTriangle, Users } from 'lucide-react';
 
 export const StudentComplaintDetails: React.FC = () => {
@@ -222,6 +223,15 @@ export const StudentComplaintDetails: React.FC = () => {
               </button>
             </div>
           </div>
+        )}
+
+        {/* Feedback Banner (for Resolved or Closed tickets) */}
+        {(complaint.status === 'RESOLVED' || complaint.status === 'CLOSED') && (
+          <FeedbackBanner
+            complaintId={complaint.id}
+            existingFeedback={complaint.feedback}
+            onFeedbackSubmitted={fetchComplaint}
+          />
         )}
       </div>
 

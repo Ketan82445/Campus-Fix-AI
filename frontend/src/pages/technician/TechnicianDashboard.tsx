@@ -4,10 +4,15 @@ import { Complaint, Status } from '../../types';
 import { ComplaintCard } from '../../components/complaint/ComplaintCard';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { EmptyState } from '../../components/common/EmptyState';
-import { Wrench, CheckCircle2, Clock, Play, AlertTriangle } from 'lucide-react';
+import { Wrench, CheckCircle2, Clock, Play, AlertTriangle, Star } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { feedbackApi } from '../../services/feedbackApi';
+import { TechnicianPerformance } from '../../types';
 
 export const TechnicianDashboard: React.FC = () => {
+  const { user } = useAuth();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [performance, setPerformance] = useState<TechnicianPerformance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
@@ -22,9 +27,22 @@ export const TechnicianDashboard: React.FC = () => {
     }
   };
 
+  const fetchPerformance = async () => {
+    if (!user) return;
+    try {
+      const res = await feedbackApi.getTechnicianPerformance(user.id);
+      if (res.success && res.data) {
+        setPerformance(res.data);
+      }
+    } catch {}
+  };
+
   useEffect(() => {
-    fetchComplaints();
-  }, []);
+    if (user) {
+      fetchComplaints();
+      fetchPerformance();
+    }
+  }, [user]);
 
   const handleUpdateStatus = async (id: string, newStatus: Status) => {
     try {
@@ -53,7 +71,7 @@ export const TechnicianDashboard: React.FC = () => {
       </div>
 
       {/* Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <div className="flex justify-between items-center text-slate-500 text-xs mb-2">
             <span>New Assignments</span>
@@ -84,6 +102,17 @@ export const TechnicianDashboard: React.FC = () => {
             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
           </div>
           <p className="text-2xl font-black text-emerald-600">{resolvedCount}</p>
+        </div>
+
+        <div className="bg-gradient-to-r from-amber-50 to-amber-100/50 p-4 rounded-xl border border-amber-200 shadow-2xs">
+          <div className="flex justify-between items-center text-amber-700 text-xs mb-2 font-semibold">
+            <span>Student Rating</span>
+            <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+          </div>
+          <p className="text-2xl font-black text-amber-600">
+            {performance?.averageRating ? performance.averageRating.toFixed(1) : 'N/A'}
+          </p>
+          <p className="text-[10px] text-amber-700/70 mt-0.5">{performance?.totalReviews || 0} Reviews</p>
         </div>
       </div>
 

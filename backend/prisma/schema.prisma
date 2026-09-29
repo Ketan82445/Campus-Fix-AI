@@ -78,6 +78,7 @@ model User {
   auditLogs          AuditLog[]
   comments           ComplaintComment[]
   upvotes            ComplaintUpvote[]
+  feedbacks          ComplaintFeedback[]
 
   @@index([email])
   @@index([role])
@@ -142,6 +143,7 @@ model Complaint {
   comments       ComplaintComment[]
   attachments    ComplaintAttachment[]
   upvotes        ComplaintUpvote[]
+  feedback       ComplaintFeedback?
 
   @@index([status])
   @@index([category])
@@ -278,5 +280,20 @@ model SLAConfig {
   resolutionHours Int
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+
+model ComplaintFeedback {
+  id          String    @id @default(uuid())
+  complaintId String    @unique
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  rating      Int
+  comment     String?
+  createdAt   DateTime  @default(now())
+
+  @@index([studentId])
+  @@index([rating])
 }
 

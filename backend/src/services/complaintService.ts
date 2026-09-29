@@ -299,6 +299,7 @@ export class ComplaintService {
           where: { userId: user.id },
           select: { id: true }
         },
+        feedback: true,
         _count: {
           select: { upvotes: true }
         }

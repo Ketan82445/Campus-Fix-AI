@@ -150,6 +150,7 @@ export interface Complaint {
   assignments?: Assignment[];
   comments?: ComplaintComment[];
   attachments?: ComplaintAttachment[];
+  feedback?: ComplaintFeedback | null;
   upvoteCount?: number;
   hasUpvoted?: boolean;
   duplicateOfId?: string | null;
@@ -263,5 +264,25 @@ export interface SLAConfig {
   priority: Priority;
   responseHours: number;
   resolutionHours: number;
+}
+
+
+export interface ComplaintFeedback {
+  id: string;
+  complaintId: string;
+  studentId: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+  student?: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface TechnicianPerformance {
+  averageRating: number;
+  totalReviews: number;
+  ratingDistribution: Record<number, number>;
 }
 
