@@ -18,7 +18,11 @@ export const analyticsApi = {
     return api.get('/analytics/priorities');
   },
 
-  getRecurring: async (): Promise<ApiResponse<any[]>> => {
-    return api.get('/analytics/recurring');
+  getRecurring: async (days: number = 30): Promise<ApiResponse<any[]>> => {
+    return api.get(`/analytics/recurring?days=${days}`);
+  },
+
+  getHotspots: async (days: number = 30): Promise<ApiResponse<any>> => {
+    return api.get(`/analytics/hotspots?days=${days}`);
   }
 };

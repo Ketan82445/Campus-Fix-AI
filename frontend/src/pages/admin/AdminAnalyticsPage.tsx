@@ -20,6 +20,7 @@ export const AdminAnalyticsPage: React.FC = () => {
   const [priorities, setPriorities] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
   const [recurring, setRecurring] = useState<any[]>([]);
+  const [hotspots, setHotspots] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -27,13 +28,15 @@ export const AdminAnalyticsPage: React.FC = () => {
       analyticsApi.getCategories(),
       analyticsApi.getPriorities(),
       analyticsApi.getDepartments(),
-      analyticsApi.getRecurring()
+      analyticsApi.getRecurring(),
+      analyticsApi.getHotspots()
     ])
-      .then(([catRes, prioRes, deptRes, recRes]) => {
+      .then(([catRes, prioRes, deptRes, recRes, hotRes]) => {
         if (catRes.success) setCategories(catRes.data);
         if (prioRes.success) setPriorities(prioRes.data);
         if (deptRes.success) setDepartments(deptRes.data);
         if (recRes.success) setRecurring(recRes.data);
+        if (hotRes.success) setHotspots(hotRes.data);
       })
       .finally(() => setIsLoading(false));
   }, []);
@@ -122,7 +125,56 @@ export const AdminAnalyticsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Recurring Issues Detection */}
+      {/* Problem Hotspots Ranking (Cluster 7) */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <Layers className="w-4 h-4 text-indigo-600" /> Infrastructure Problem Hotspots
+          </h2>
+          <span className="text-xs text-slate-500 font-mono">Ranked by Volume (Last 30 Days)</span>
+        </div>
+
+        {!hotspots || hotspots.byBuildingAndFloor.length === 0 ? (
+          <p className="text-xs text-slate-500 italic p-4 text-center">No structural hotspots detected recently.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
+                  <th className="p-3 w-16 text-center">Rank</th>
+                  <th className="p-3">Building</th>
+                  <th className="p-3">Floor</th>
+                  <th className="p-3">Total Issues</th>
+                  <th className="p-3">Risk Level</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {hotspots.byBuildingAndFloor.map((item: any, i: number) => (
+                  <tr key={i} className="hover:bg-slate-50/50">
+                    <td className="p-3 text-center font-bold text-slate-400">#{i + 1}</td>
+                    <td className="p-3 font-semibold text-slate-800">{item.building}</td>
+                    <td className="p-3 text-slate-600">{item.floor}</td>
+                    <td className="p-3 font-mono font-bold text-slate-900">{item.issueCount}</td>
+                    <td className="p-3">
+                      {item.issueCount >= 5 ? (
+                        <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 border border-rose-200 font-bold text-[10px]">
+                          CRITICAL ZONE
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px]">
+                          Elevated
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Recurring Issues Detection (Cluster 8) */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">

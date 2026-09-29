@@ -42,8 +42,19 @@ export class AnalyticsController {
 
   public static async getRecurring(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const recurring = await AnalyticsService.getRecurringIssues();
+      const days = parseInt(req.query.days as string) || 30;
+      const recurring = await AnalyticsService.getRecurringIssues(days);
       return sendSuccess(res, recurring);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public static async getHotspots(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const days = parseInt(req.query.days as string) || 30;
+      const hotspots = await AnalyticsService.getProblemHotspots(days);
+      return sendSuccess(res, hotspots);
     } catch (error) {
       next(error);
     }

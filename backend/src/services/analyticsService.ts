@@ -85,22 +85,82 @@ export class AnalyticsService {
   }
 
   /**
-   * Detect Recurring Issues: Group by location and category
+   * Detect Problem Hotspots (Cluster 7)
    */
-  public static async getRecurringIssues() {
-    const items = await prisma.complaint.groupBy({
-      by: ['location', 'category'],
+  public static async getProblemHotspots(days: number = 30) {
+    const sinceDate = new Date();
+    sinceDate.setDate(sinceDate.getDate() - days);
+
+    // 1. Building + Floor level hotspots
+    const buildingFloorStats = await prisma.complaint.groupBy({
+      by: ['building', 'floor'],
+      where: {
+        createdAt: { gte: sinceDate },
+        building: { not: null }
+      },
       _count: { id: true },
-      having: {
-        id: { _count: { gte: 2 } }
-      }
+      orderBy: { _count: { id: 'desc' } },
+      take: 10
     });
 
-    return items.map(item => ({
-      location: item.location,
-      category: item.category,
-      count: item._count.id,
-      isFlagged: item._count.id >= 3
-    }));
+    // 2. Specific raw location string hotspots
+    const locationStats = await prisma.complaint.groupBy({
+      by: ['location'],
+      where: {
+        createdAt: { gte: sinceDate }
+      },
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 10
+    });
+
+    return {
+      byBuildingAndFloor: buildingFloorStats.map(stat => ({
+        building: stat.building,
+        floor: stat.floor || 'Unknown Floor',
+        issueCount: stat._count.id
+      })),
+      byLocation: locationStats.map(stat => ({
+        location: stat.location,
+        issueCount: stat._count.id
+      }))
+    };
+  }
+
+  /**
+   * Detect Recurring Issues (Cluster 8)
+   * Groups by identical category + location within a timeframe to spot systemic problems.
+   */
+  public static async getRecurringIssues(days: number = 30) {
+    const sinceDate = new Date();
+    sinceDate.setDate(sinceDate.getDate() - days);
+
+    const items = await prisma.complaint.groupBy({
+      by: ['location', 'category'],
+      where: {
+        createdAt: { gte: sinceDate }
+      },
+      _count: { id: true },
+      having: {
+        id: { _count: { gt: 1 } } // At least 2 issues
+      },
+      orderBy: { _count: { id: 'desc' } },
+      take: 15
+    });
+
+    return items.map(item => {
+      const count = item._count.id;
+      let severity = 'NOTICE';
+      if (count >= 5) severity = 'CRITICAL';
+      else if (count >= 3) severity = 'WARNING';
+
+      return {
+        location: item.location,
+        category: item.category,
+        count: count,
+        severity,
+        isSystemicRisk: count >= 3
+      };
+    });
   }
 }

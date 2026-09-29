@@ -13,5 +13,6 @@ router.get('/categories', AnalyticsController.getCategories);
 router.get('/departments', AnalyticsController.getDepartments);
 router.get('/priorities', AnalyticsController.getPriorities);
 router.get('/recurring', AnalyticsController.getRecurring);
+router.get('/hotspots', AnalyticsController.getHotspots);
 
 export default router;
