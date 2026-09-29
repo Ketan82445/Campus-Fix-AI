@@ -6,6 +6,7 @@ import { RoutingService } from './routingService';
 import { AssignmentService } from './assignmentService';
 import { NotificationService } from './notificationService';
 import { AuditService } from './auditService';
+import { ComplaintSimilarityService, CheckSimilarInput } from './complaintSimilarityService';
 
 const AI_CONFIDENCE_THRESHOLD = 0.75; // AI auto-routing threshold
 
@@ -19,7 +20,19 @@ export class ComplaintService {
     description: string,
     location: string,
     manualCategory?: Category,
-    manualPriority?: Priority
+    manualPriority?: Priority,
+    extra?: {
+      building?: string;
+      floor?: string;
+      room?: string;
+      language?: string;
+      attachments?: Array<{
+        fileName: string;
+        fileUrl: string;
+        fileSize: number;
+        mimeType: string;
+      }>;
+    }
   ) {
     // 1. Generate unique complaint number (CMP-YYYY-XXXX)
     const count = await prisma.complaint.count();
@@ -55,12 +68,27 @@ export class ComplaintService {
           title,
           description,
           location,
+          building: extra?.building || null,
+          floor: extra?.floor || null,
+          room: extra?.room || null,
+          language: extra?.language || 'en',
           category,
           priority,
           status: initialStatus,
           aiConfidence: aiResult.confidence,
           createdById: creator.id,
-          departmentId: targetDept ? targetDept.id : null
+          departmentId: targetDept ? targetDept.id : null,
+          attachments:
+            extra?.attachments && extra.attachments.length > 0
+              ? {
+                  create: extra.attachments.map((att) => ({
+                    fileName: att.fileName,
+                    fileUrl: att.fileUrl,
+                    fileSize: att.fileSize,
+                    mimeType: att.mimeType
+                  }))
+                }
+              : undefined
         }
       });
 
@@ -202,7 +230,15 @@ export class ComplaintService {
         include: {
           createdBy: { select: { id: true, name: true, email: true } },
           department: { select: { id: true, name: true, code: true } },
-          assignedTechnician: { select: { id: true, name: true, email: true, phone: true } }
+          assignedTechnician: { select: { id: true, name: true, email: true, phone: true } },
+          duplicateOf: { select: { id: true, complaintNumber: true, title: true } },
+          _count: {
+            select: {
+              upvotes: true,
+              comments: true,
+              attachments: true
+            }
+          }
         }
       }),
       prisma.complaint.count({ where })
@@ -241,6 +277,20 @@ export class ComplaintService {
         comments: {
           orderBy: { createdAt: 'asc' },
           include: { author: { select: { id: true, name: true, role: true } } }
+        },
+        attachments: true,
+        duplicateOf: {
+          select: { id: true, complaintNumber: true, title: true, status: true }
+        },
+        duplicates: {
+          select: { id: true, complaintNumber: true, title: true, status: true, createdAt: true }
+        },
+        upvotes: {
+          where: { userId: user.id },
+          select: { id: true }
+        },
+        _count: {
+          select: { upvotes: true }
         }
       }
     });
@@ -249,12 +299,19 @@ export class ComplaintService {
       throw new AppError('Complaint not found', 404, 'NOT_FOUND');
     }
 
-    // Access check
+    // Access check: allow creator, assignees, admins, or students who upvoted
     if (user.role === Role.STUDENT && complaint.createdById !== user.id) {
-      throw new AppError('Access denied', 403, 'FORBIDDEN');
+      const hasUpvoted = complaint.upvotes.length > 0;
+      if (!hasUpvoted) {
+        throw new AppError('Access denied', 403, 'FORBIDDEN');
+      }
     }
 
-    return complaint;
+    return {
+      ...complaint,
+      hasUpvoted: complaint.upvotes.length > 0,
+      upvoteCount: complaint._count.upvotes
+    };
   }
 
   /**
@@ -459,5 +516,181 @@ export class ComplaintService {
     });
 
     return newComment;
+  }
+
+  /**
+   * Delete an attachment from a complaint (only creator or admin)
+   */
+  public static async deleteAttachment(complaintId: string, attachmentId: string, user: UserPayload) {
+    const complaint = await prisma.complaint.findUnique({
+      where: { id: complaintId },
+      include: { attachments: true }
+    });
+    if (!complaint) throw new AppError('Complaint not found', 404, 'NOT_FOUND');
+    if (user.role === Role.STUDENT && complaint.createdById !== user.id) {
+      throw new AppError('Access denied', 403, 'FORBIDDEN');
+    }
+
+    const attachment = complaint.attachments.find((a) => a.id === attachmentId);
+    if (!attachment) throw new AppError('Attachment not found', 404, 'NOT_FOUND');
+
+    await prisma.complaintAttachment.delete({ where: { id: attachmentId } });
+    return { success: true, message: 'Attachment deleted successfully' };
+  }
+
+  /**
+   * Toggle student upvote ("I'm Affected Too") for a complaint
+   */
+  public static async toggleUpvote(complaintId: string, user: UserPayload) {
+    const complaint = await prisma.complaint.findUnique({
+      where: { id: complaintId },
+      select: { id: true, title: true, createdById: true, complaintNumber: true }
+    });
+    if (!complaint) throw new AppError('Complaint not found', 404, 'NOT_FOUND');
+
+    const existing = await prisma.complaintUpvote.findUnique({
+      where: {
+        complaintId_userId: {
+          complaintId,
+          userId: user.id
+        }
+      }
+    });
+
+    let upvoted = false;
+    if (existing) {
+      await prisma.complaintUpvote.delete({
+        where: { id: existing.id }
+      });
+      upvoted = false;
+    } else {
+      await prisma.complaintUpvote.create({
+        data: {
+          complaintId,
+          userId: user.id
+        }
+      });
+      upvoted = true;
+
+      // Notify the complaint creator if not self
+      if (complaint.createdById !== user.id) {
+        await NotificationService.createNotification(
+          complaint.createdById,
+          'Community Issue Confirmed',
+          `${user.name || 'Another student'} also confirmed they are affected by #${complaint.complaintNumber} ("${complaint.title}").`,
+          'COMMUNITY_UPVOTE',
+          complaint.id
+        );
+      }
+    }
+
+    const upvoteCount = await prisma.complaintUpvote.count({
+      where: { complaintId }
+    });
+
+    return {
+      upvoted,
+      upvoteCount,
+      message: upvoted
+        ? 'You have been marked as affected by this issue. You will receive updates.'
+        : 'Your confirmation has been removed.'
+    };
+  }
+
+  /**
+   * Mark a complaint as a duplicate of an existing primary complaint
+   */
+  public static async markAsDuplicate(
+    complaintId: string,
+    originalComplaintId: string,
+    user: UserPayload,
+    reason?: string
+  ) {
+    if (complaintId === originalComplaintId) {
+      throw new AppError('A complaint cannot be marked as a duplicate of itself', 400, 'BAD_REQUEST');
+    }
+
+    const [duplicateComplaint, originalComplaint] = await Promise.all([
+      prisma.complaint.findUnique({ where: { id: complaintId } }),
+      prisma.complaint.findUnique({ where: { id: originalComplaintId } })
+    ]);
+
+    if (!duplicateComplaint) throw new AppError('Complaint to mark as duplicate not found', 404, 'NOT_FOUND');
+    if (!originalComplaint) throw new AppError('Original reference complaint not found', 404, 'NOT_FOUND');
+
+    // Only technician or admin can link duplicates
+    if (user.role === Role.STUDENT) {
+      throw new AppError('Students cannot link tickets as duplicates', 403, 'FORBIDDEN');
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const comp = await tx.complaint.update({
+        where: { id: complaintId },
+        data: {
+          duplicateOfId: originalComplaintId,
+          status: Status.CLOSED,
+          closedAt: new Date()
+        }
+      });
+
+      await tx.statusHistory.create({
+        data: {
+          complaintId,
+          changedById: user.id,
+          oldStatus: duplicateComplaint.status,
+          newStatus: Status.CLOSED,
+          reason: `Linked as duplicate of ${originalComplaint.complaintNumber}. Reason: ${reason || 'Identical issue.'}`
+        }
+      });
+
+      await tx.complaintComment.create({
+        data: {
+          complaintId,
+          authorId: user.id,
+          comment: `Marked as duplicate of #${originalComplaint.complaintNumber} ("${originalComplaint.title}"). Track updates on the original ticket.`,
+          isInternal: false
+        }
+      });
+
+      return comp;
+    });
+
+    // Notify the student who created the duplicate ticket
+    await NotificationService.createNotification(
+      duplicateComplaint.createdById,
+      'Complaint Marked as Duplicate',
+      `Your complaint #${duplicateComplaint.complaintNumber} was linked as duplicate to #${originalComplaint.complaintNumber}. Resolution will be tracked on the original ticket.`,
+      'DUPLICATE_LINKED',
+      originalComplaint.id
+    );
+
+    // Also auto-add student as an upvoter to the original complaint if not already
+    const existingUpvote = await prisma.complaintUpvote.findUnique({
+      where: {
+        complaintId_userId: {
+          complaintId: originalComplaintId,
+          userId: duplicateComplaint.createdById
+        }
+      }
+    });
+
+    if (!existingUpvote) {
+      await prisma.complaintUpvote.create({
+        data: {
+          complaintId: originalComplaintId,
+          userId: duplicateComplaint.createdById
+        }
+      });
+    }
+
+    return updated;
+  }
+
+  /**
+   * Real-time duplicate & similar complaint detection search
+   */
+  public static async checkSimilarComplaints(input: CheckSimilarInput) {
+    const similarityService = new ComplaintSimilarityService(prisma);
+    return similarityService.findSimilarComplaints(input);
   }
 }

@@ -1,6 +1,6 @@
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -77,6 +77,7 @@ model User {
   notifications      Notification[]
   auditLogs          AuditLog[]
   comments           ComplaintComment[]
+  upvotes            ComplaintUpvote[]
 
   @@index([email])
   @@index([role])
@@ -114,15 +115,26 @@ model Complaint {
   assignedTechnicianId String?
   assignedTechnician   User?      @relation("AssignedTechnician", fields: [assignedTechnicianId], references: [id], onDelete: SetNull)
 
+  building             String?
+  floor                String?
+  room                 String?
+  language             String?    @default("en")
+
   createdAt            DateTime   @default(now())
   updatedAt            DateTime   @updatedAt
   resolvedAt           DateTime?
   closedAt             DateTime?
 
+  duplicateOfId        String?
+  duplicateOf          Complaint?  @relation("ComplaintDuplicates", fields: [duplicateOfId], references: [id], onDelete: SetNull)
+  duplicates           Complaint[] @relation("ComplaintDuplicates")
+
   assignments    Assignment[]
   statusHistory  StatusHistory[]
   aiPredictions  AIPrediction[]
   comments       ComplaintComment[]
+  attachments    ComplaintAttachment[]
+  upvotes        ComplaintUpvote[]
 
   @@index([status])
   @@index([category])
@@ -130,7 +142,34 @@ model Complaint {
   @@index([departmentId])
   @@index([createdById])
   @@index([assignedTechnicianId])
+  @@index([duplicateOfId])
   @@index([createdAt])
+}
+
+model ComplaintUpvote {
+  id          String    @id @default(uuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([complaintId, userId])
+  @@index([complaintId])
+  @@index([userId])
+}
+
+model ComplaintAttachment {
+  id          String    @id @default(uuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  fileUrl     String
+  fileName    String
+  fileSize    Int
+  mimeType    String
+  createdAt   DateTime  @default(now())
+
+  @@index([complaintId])
 }
 
 model Assignment {

@@ -5,8 +5,10 @@ import { Complaint } from '../../types';
 import { StatusBadge, PriorityBadge, CategoryBadge } from '../../components/common/Badge';
 import { StatusTimeline } from '../../components/complaint/StatusTimeline';
 import { AIConfidenceBadge } from '../../components/complaint/AIConfidenceBadge';
+import { AttachmentGallery } from '../../components/complaint/AttachmentGallery';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { ArrowLeft, MapPin, Calendar, CheckCircle2, RefreshCw, Send, MessageSquare, Wrench } from 'lucide-react';
+import { UpvoteButton } from '../../components/complaint/UpvoteButton';
+import { ArrowLeft, MapPin, Calendar, CheckCircle2, RefreshCw, Send, MessageSquare, Wrench, AlertTriangle, Users } from 'lucide-react';
 
 export const StudentComplaintDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -76,6 +78,16 @@ export const StudentComplaintDetails: React.FC = () => {
     }
   };
 
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    if (!id) return;
+    try {
+      await complaintApi.deleteAttachment(id, attachmentId);
+      await fetchComplaint();
+    } catch {
+      // ignore
+    }
+  };
+
   if (isLoading) return <LoadingSpinner message="Loading complaint details..." />;
   if (!complaint) return <p className="p-8 text-xs text-rose-600">Complaint not found.</p>;
 
@@ -94,6 +106,11 @@ export const StudentComplaintDetails: React.FC = () => {
               {complaint.complaintNumber}
             </span>
             <CategoryBadge category={complaint.category} />
+            {complaint.language && complaint.language !== 'en' && (
+              <span className="text-[10px] bg-brand-50 text-brand-700 font-bold px-2 py-0.5 rounded uppercase">
+                {complaint.language}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <PriorityBadge priority={complaint.priority} />
@@ -101,21 +118,79 @@ export const StudentComplaintDetails: React.FC = () => {
           </div>
         </div>
 
+        {/* Merged Duplicate Banner */}
+        {complaint.duplicateOf && (
+          <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
+              <div>
+                <span className="font-bold">Merged Duplicate:</span> This issue was marked as a duplicate of primary ticket{' '}
+                <span className="font-mono font-bold text-amber-950">#{complaint.duplicateOf.complaintNumber}</span> (
+                "{complaint.duplicateOf.title}").
+              </div>
+            </div>
+            <Link
+              to={`/student/complaints/${complaint.duplicateOf.id}`}
+              className="shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 font-semibold text-white hover:bg-amber-700 transition"
+            >
+              View Primary Ticket &rarr;
+            </Link>
+          </div>
+        )}
+
+        {/* Master Ticket Linked Duplicates */}
+        {complaint.duplicates && complaint.duplicates.length > 0 && (
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-3 text-xs text-indigo-900 flex items-center gap-2">
+            <Users className="h-4 w-4 text-indigo-600 shrink-0" />
+            <span>
+              <strong>{complaint.duplicates.length} duplicate report(s)</strong> merged into this ticket:{' '}
+              {complaint.duplicates.map((d) => `#${d.complaintNumber}`).join(', ')}
+            </span>
+          </div>
+        )}
+
         <div>
           <h1 className="text-xl font-bold text-slate-900 mb-2">{complaint.title}</h1>
           <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{complaint.description}</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-2 border-t border-slate-100">
-          <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500 pt-2 border-t border-slate-100">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <MapPin className="w-4 h-4 text-slate-400" />
             <span className="font-semibold text-slate-700">{complaint.location}</span>
+            {complaint.building && (
+              <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium">
+                🏢 {complaint.building} {complaint.floor ? `• ${complaint.floor}` : ''} {complaint.room ? `• ${complaint.room}` : ''}
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-1.5">
-            <Calendar className="w-4 h-4 text-slate-400" />
-            <span>Logged on {new Date(complaint.createdAt).toLocaleDateString()}</span>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-4 h-4 text-slate-400" />
+              <span>Logged on {new Date(complaint.createdAt).toLocaleDateString()}</span>
+            </div>
+
+            {/* Community Issue Confirmation ("I'm Affected Too" / Upvote) */}
+            <UpvoteButton
+              complaintId={complaint.id}
+              initialCount={complaint.upvoteCount || complaint._count?.upvotes || 0}
+              initialHasUpvoted={complaint.hasUpvoted || false}
+              size="sm"
+            />
           </div>
         </div>
+
+        {/* Attachments Section */}
+        {complaint.attachments && complaint.attachments.length > 0 && (
+          <div className="pt-2 border-t border-slate-100">
+            <AttachmentGallery
+              attachments={complaint.attachments}
+              canDelete={true}
+              onDelete={handleDeleteAttachment}
+            />
+          </div>
+        )}
 
         {/* Resolution Actions for Student */}
         {complaint.status === 'RESOLVED' && (

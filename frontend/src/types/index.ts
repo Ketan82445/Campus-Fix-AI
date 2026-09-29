@@ -113,6 +113,10 @@ export interface Complaint {
   category: Category;
   priority: Priority;
   location: string;
+  building?: string | null;
+  floor?: string | null;
+  room?: string | null;
+  language?: string | null;
   status: Status;
   aiConfidence?: number | null;
   createdById: string;
@@ -139,6 +143,56 @@ export interface Complaint {
   aiPredictions?: AIPrediction[];
   assignments?: Assignment[];
   comments?: ComplaintComment[];
+  attachments?: ComplaintAttachment[];
+  upvoteCount?: number;
+  hasUpvoted?: boolean;
+  duplicateOfId?: string | null;
+  duplicateOf?: {
+    id: string;
+    complaintNumber: string;
+    title: string;
+    status?: Status;
+  } | null;
+  duplicates?: Array<{
+    id: string;
+    complaintNumber: string;
+    title: string;
+    status: Status;
+    createdAt: string;
+  }>;
+  _count?: {
+    upvotes?: number;
+    comments?: number;
+    attachments?: number;
+  };
+}
+
+export interface SimilarComplaint {
+  id: string;
+  complaintNumber: string;
+  title: string;
+  description: string;
+  category: Category;
+  location: string;
+  building?: string | null;
+  floor?: string | null;
+  room?: string | null;
+  status: Status;
+  createdAt: string;
+  similarityScore: number;
+  matchReasons: string[];
+  upvoteCount: number;
+  hasUpvoted: boolean;
+}
+
+export interface ComplaintAttachment {
+  id: string;
+  complaintId: string;
+  fileUrl: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  createdAt: string;
 }
 
 export interface Notification {

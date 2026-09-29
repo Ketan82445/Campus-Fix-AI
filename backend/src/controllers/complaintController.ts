@@ -6,7 +6,10 @@ import {
   createComplaintSchema,
   updateStatusSchema,
   reopenComplaintSchema,
-  reviewAIPredictionSchema
+  reviewAIPredictionSchema,
+  uploadAttachmentSchema,
+  checkSimilarSchema,
+  markDuplicateSchema
 } from '../validators/complaintValidator';
 
 export class ComplaintController {
@@ -19,7 +22,14 @@ export class ComplaintController {
         validated.description,
         validated.location,
         validated.category,
-        validated.priority
+        validated.priority,
+        {
+          building: validated.building,
+          floor: validated.floor,
+          room: validated.room,
+          language: validated.language,
+          attachments: validated.attachments
+        }
       );
       return sendSuccess(res, complaint, 'Complaint logged successfully', 201);
     } catch (error) {
@@ -98,4 +108,75 @@ export class ComplaintController {
       next(error);
     }
   }
+
+  public static async uploadAttachment(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const validated = uploadAttachmentSchema.parse(req.body);
+      const approxBytes = Math.round((validated.fileData.length * 3) / 4);
+      if (approxBytes > 5 * 1024 * 1024) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'FILE_TOO_LARGE', message: 'File size exceeds maximum allowed limit of 5MB' }
+        });
+      }
+
+      return sendSuccess(
+        res,
+        {
+          fileName: validated.fileName,
+          fileUrl: validated.fileData,
+          fileSize: approxBytes,
+          mimeType: validated.mimeType
+        },
+        'Attachment validated successfully'
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public static async deleteAttachment(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { id, attachmentId } = req.params;
+      const result = await ComplaintService.deleteAttachment(id, attachmentId, req.user!);
+      return sendSuccess(res, result, 'Attachment deleted successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public static async checkSimilar(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const validated = checkSimilarSchema.parse(req.body);
+      const matches = await ComplaintService.checkSimilarComplaints({
+        ...validated,
+        userId: req.user?.id
+      });
+      return sendSuccess(res, matches, 'Similar complaints checked successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public static async toggleUpvote(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const result = await ComplaintService.toggleUpvote(id, req.user!);
+      return sendSuccess(res, result, result.message);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public static async markDuplicate(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { originalComplaintId, reason } = markDuplicateSchema.parse(req.body);
+      const updated = await ComplaintService.markAsDuplicate(id, originalComplaintId, req.user!, reason);
+      return sendSuccess(res, updated, 'Complaint linked as duplicate successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
 }
+

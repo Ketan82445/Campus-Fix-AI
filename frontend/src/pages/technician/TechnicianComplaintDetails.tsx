@@ -5,8 +5,10 @@ import { Complaint, Status } from '../../types';
 import { StatusBadge, PriorityBadge, CategoryBadge } from '../../components/common/Badge';
 import { StatusTimeline } from '../../components/complaint/StatusTimeline';
 import { AIConfidenceBadge } from '../../components/complaint/AIConfidenceBadge';
+import { AttachmentGallery } from '../../components/complaint/AttachmentGallery';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { ArrowLeft, MapPin, Calendar, CheckCircle2, Play, Send, MessageSquare, User } from 'lucide-react';
+import { MarkDuplicateModal } from '../../components/complaint/MarkDuplicateModal';
+import { ArrowLeft, MapPin, Calendar, CheckCircle2, Play, Send, MessageSquare, User, Copy, AlertTriangle, Users } from 'lucide-react';
 
 export const TechnicianComplaintDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,6 +20,7 @@ export const TechnicianComplaintDetails: React.FC = () => {
   const [isInternal, setIsInternal] = useState(false);
   const [statusReason, setStatusReason] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
 
   const fetchComplaint = async () => {
     if (!id) return;
@@ -84,25 +87,90 @@ export const TechnicianComplaintDetails: React.FC = () => {
           </div>
         </div>
 
+        {/* Merged Duplicate Banner */}
+        {complaint.duplicateOf && (
+          <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
+              <div>
+                <span className="font-bold">Merged Duplicate:</span> This issue was closed and marked as duplicate of{' '}
+                <span className="font-mono font-bold text-amber-950">#{complaint.duplicateOf.complaintNumber}</span> (
+                "{complaint.duplicateOf.title}").
+              </div>
+            </div>
+            <Link
+              to={`/technician/complaints/${complaint.duplicateOf.id}`}
+              className="shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 font-semibold text-white hover:bg-amber-700 transition"
+            >
+              View Primary Ticket &rarr;
+            </Link>
+          </div>
+        )}
+
+        {/* Master Ticket Linked Duplicates */}
+        {complaint.duplicates && complaint.duplicates.length > 0 && (
+          <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-3 text-xs text-indigo-900 flex items-center gap-2">
+            <Users className="h-4 w-4 text-indigo-600 shrink-0" />
+            <span>
+              <strong>{complaint.duplicates.length} duplicate report(s)</strong> merged into this ticket:{' '}
+              {complaint.duplicates.map((d) => `#${d.complaintNumber}`).join(', ')}
+            </span>
+          </div>
+        )}
+
         <div>
           <h1 className="text-xl font-bold text-slate-900 mb-2">{complaint.title}</h1>
           <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{complaint.description}</p>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500 pt-2 border-t border-slate-100">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <MapPin className="w-4 h-4 text-slate-400" />
             <span className="font-semibold text-slate-700">{complaint.location}</span>
+            {complaint.building && (
+              <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium">
+                🏢 {complaint.building} {complaint.floor ? `• ${complaint.floor}` : ''} {complaint.room ? `• ${complaint.room}` : ''}
+              </span>
+            )}
+            {complaint.language && complaint.language !== 'en' && (
+              <span className="text-[10px] bg-brand-50 text-brand-700 font-bold px-2 py-0.5 rounded uppercase">
+                {complaint.language}
+              </span>
+            )}
           </div>
-          <div className="flex items-center gap-1.5">
-            <User className="w-4 h-4 text-slate-400" />
-            <span>Student: <strong className="text-slate-700">{complaint.createdBy?.name}</strong> ({complaint.createdBy?.email})</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <User className="w-4 h-4 text-slate-400" />
+              <span>Student: <strong className="text-slate-700">{complaint.createdBy?.name}</strong></span>
+            </div>
+            <span className="flex items-center gap-1 text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200">
+              <Users className="w-3.5 h-3.5" />
+              {complaint.upvoteCount || complaint._count?.upvotes || 0} Affected
+            </span>
           </div>
         </div>
 
+        {/* Attachments Section for Technician Review */}
+        {complaint.attachments && complaint.attachments.length > 0 && (
+          <div className="pt-2 border-t border-slate-100">
+            <AttachmentGallery attachments={complaint.attachments} canDelete={false} />
+          </div>
+        )}
+
         {/* Technician Action Controls */}
         <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-          <h3 className="text-xs font-bold text-slate-800">Update Task Status & Work Notes</h3>
+          <div className="flex justify-between items-center">
+            <h3 className="text-xs font-bold text-slate-800">Update Task Status & Work Notes</h3>
+            {complaint.status !== 'CLOSED' && (
+              <button
+                type="button"
+                onClick={() => setShowDuplicateModal(true)}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white px-2.5 py-1 rounded-md border border-slate-300 hover:bg-slate-50 transition"
+              >
+                <Copy className="w-3.5 h-3.5 text-slate-500" /> Mark as Duplicate
+              </button>
+            )}
+          </div>
           <input
             type="text"
             value={statusReason}
@@ -176,6 +244,20 @@ export const TechnicianComplaintDetails: React.FC = () => {
           </div>
         </form>
       </div>
+
+      {/* Mark as Duplicate Modal */}
+      {complaint && (
+        <MarkDuplicateModal
+          complaintId={complaint.id}
+          complaintNumber={complaint.complaintNumber}
+          isOpen={showDuplicateModal}
+          onClose={() => setShowDuplicateModal(false)}
+          onSuccess={() => {
+            setShowDuplicateModal(false);
+            fetchComplaint();
+          }}
+        />
+      )}
     </div>
   );
 };
