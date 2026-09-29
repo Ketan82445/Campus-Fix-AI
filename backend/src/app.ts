@@ -13,6 +13,7 @@ import departmentRoutes from './routes/departmentRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import userRoutes from './routes/userRoutes';
+import slaRoutes from './routes/slaRoutes';
 
 const app = express();
 
@@ -74,6 +75,7 @@ app.use(['/api/departments', '/departments'], departmentRoutes);
 app.use(['/api/notifications', '/notifications'], notificationRoutes);
 app.use(['/api/analytics', '/analytics'], analyticsRoutes);
 app.use(['/api/users', '/users'], userRoutes);
+app.use(['/api/sla', '/sla'], slaRoutes);
 
 // 404 Route Fallback
 app.use('*', (req, res) => {

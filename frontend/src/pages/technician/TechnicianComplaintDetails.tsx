@@ -8,6 +8,7 @@ import { AIConfidenceBadge } from '../../components/complaint/AIConfidenceBadge'
 import { AttachmentGallery } from '../../components/complaint/AttachmentGallery';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { MarkDuplicateModal } from '../../components/complaint/MarkDuplicateModal';
+import { SlaCountdownBadge } from '../../components/complaint/SlaCountdownBadge';
 import { ArrowLeft, MapPin, Calendar, CheckCircle2, Play, Send, MessageSquare, User, Copy, AlertTriangle, Users } from 'lucide-react';
 
 export const TechnicianComplaintDetails: React.FC = () => {
@@ -81,9 +82,15 @@ export const TechnicianComplaintDetails: React.FC = () => {
             </span>
             <CategoryBadge category={complaint.category} />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <PriorityBadge priority={complaint.priority} />
             <StatusBadge status={complaint.status} />
+            <SlaCountdownBadge
+              resolutionDeadline={complaint.resolutionDeadline}
+              slaBreached={complaint.slaBreached}
+              status={complaint.status}
+              escalationLevel={complaint.escalationLevel}
+            />
           </div>
         </div>
 

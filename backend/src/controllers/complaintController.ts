@@ -39,7 +39,7 @@ export class ComplaintController {
 
   public static async getMany(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const { page, limit, status, category, priority, departmentId, search } = req.query;
+      const { page, limit, status, category, priority, departmentId, search, slaBreached } = req.query;
       const result = await ComplaintService.getComplaints(req.user!, {
         page: page ? Number(page) : undefined,
         limit: limit ? Number(limit) : undefined,
@@ -47,7 +47,8 @@ export class ComplaintController {
         category: category as any,
         priority: priority as any,
         departmentId: departmentId as string,
-        search: search as string
+        search: search as string,
+        slaBreached: slaBreached !== undefined ? slaBreached === 'true' : undefined
       });
       return sendSuccess(res, result);
     } catch (error) {

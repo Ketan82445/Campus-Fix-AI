@@ -67,6 +67,7 @@ export const complaintApi = {
     priority?: Priority;
     departmentId?: string;
     search?: string;
+    slaBreached?: boolean;
   }): Promise<ApiResponse<PaginatedResponse<Complaint>>> => {
     return api.get('/complaints', { params });
   },

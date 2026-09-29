@@ -8,6 +8,7 @@ import { AIConfidenceBadge } from '../../components/complaint/AIConfidenceBadge'
 import { AttachmentGallery } from '../../components/complaint/AttachmentGallery';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { UpvoteButton } from '../../components/complaint/UpvoteButton';
+import { SlaCountdownBadge } from '../../components/complaint/SlaCountdownBadge';
 import { ArrowLeft, MapPin, Calendar, CheckCircle2, RefreshCw, Send, MessageSquare, Wrench, AlertTriangle, Users } from 'lucide-react';
 
 export const StudentComplaintDetails: React.FC = () => {
@@ -112,9 +113,15 @@ export const StudentComplaintDetails: React.FC = () => {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <PriorityBadge priority={complaint.priority} />
             <StatusBadge status={complaint.status} />
+            <SlaCountdownBadge
+              resolutionDeadline={complaint.resolutionDeadline}
+              slaBreached={complaint.slaBreached}
+              status={complaint.status}
+              escalationLevel={complaint.escalationLevel}
+            />
           </div>
         </div>
 

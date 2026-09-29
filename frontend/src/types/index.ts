@@ -126,6 +126,12 @@ export interface Complaint {
   updatedAt: string;
   resolvedAt?: string | null;
   closedAt?: string | null;
+  responseDeadline?: string | null;
+  resolutionDeadline?: string | null;
+  respondedAt?: string | null;
+  slaBreached?: boolean;
+  escalationLevel?: number;
+  escalatedAt?: string | null;
   createdBy?: {
     id: string;
     name: string;
@@ -237,3 +243,25 @@ export interface PaginatedResponse<T> {
     totalPages: number;
   };
 }
+
+export interface SLAStats {
+  totalOpenWithSLA: number;
+  breachedTotal: number;
+  atRiskCount: number;
+  complianceRate: number;
+  byPriority: Array<{
+    priority: Priority;
+    total: number;
+    breached: number;
+    atRisk: number;
+    complianceRate: number;
+  }>;
+}
+
+export interface SLAConfig {
+  id: string;
+  priority: Priority;
+  responseHours: number;
+  resolutionHours: number;
+}
+

@@ -29,7 +29,7 @@ This audit evaluates the codebase against the **35 Feature Expansion Clusters** 
 | **3** | Duplicate & Similar Complaint Detection | Yes | Yes | No | No | **IMPLEMENTED** | Real-time multi-factor similarity engine (location + token overlap + category), instant banner with match %, and technician/admin duplicate linking. |
 | **4** | Incident Management | No | No | No | No | **NOT IMPLEMENTED** | Add `Incident` model, link multiple complaints, severity status, and incident broadcast. |
 | **5** | Smart Technician Assignment Scoring | Yes | Yes | Yes | No | **PARTIALLY IMPLEMENTED** | Upgrade from lowest-count assignment to multi-factor scoring (skill, priority, workload, department). |
-| **6** | SLA & Escalation Tracking | No | No | No | No | **NOT IMPLEMENTED** | Add `SLA` configuration model, response/resolution deadlines, warning triggers, and overdue escalation logic. |
+| **6** | SLA & Escalation Tracking | Yes | Yes | No | No | **IMPLEMENTED** | Configurable SLA response/resolution deadlines by priority (Critical: 4h/12h, High: 8h/24h, Medium: 24h/48h, Low: 48h/72h), response/resolution event timestamps, automated background breach scan with L1/L2 escalation and notifications, live UI countdown badges on task cards and complaint details, and Admin SLA governance overview card. |
 | **7** | Real Campus Intelligence Analytics | Yes | Yes | Yes | No | **PARTIALLY IMPLEMENTED** | Overview, category, priority, and workload exist; add resolution time trends and SLA compliance rates. |
 | **8** | Campus Problem Hotspots | Yes | Yes | Yes | No | **PARTIALLY IMPLEMENTED** | Basic DB grouping exists; add dedicated Hotspots ranking view with recurrence thresholding. |
 | **9** | Campus Heatmap Visualization | No | No | No | No | **NOT IMPLEMENTED** | Implement accessible campus location grid with color-coded severity metrics and numeric indicators. |
@@ -158,19 +158,20 @@ This audit evaluates the codebase against the **35 Feature Expansion Clusters** 
 ## 5. Phased Implementation Roadmap
 
 ```
-PHASE 1 (Now): Cluster 1 — Smart Complaint Reporting
-  ├── 1A: Rich Location Fields (Building, Floor, Room)
-  ├── 1B: Image Attachments (Secure file upload, validation, preview)
-  ├── 1C: QR-Based Location Prefill
-  └── 1D: Multilingual Input Support (en/hi/mr)
+PHASE 1 (COMPLETED): Cluster 1 — Smart Complaint Reporting
+  ├── 1A: Rich Location Fields (Building, Floor, Room) [DONE]
+  ├── 1B: Image Attachments (Secure file upload, validation, preview) [DONE]
+  ├── 1C: QR-Based Location Prefill [DONE]
+  └── 1D: Multilingual Input Support (en/hi/mr) [DONE]
 
-PHASE 2: Cluster 3 & Cluster 20 — Duplicate Detection & Community Confirmations
-  ├── Duplicate detection algorithm before complaint submission
-  └── "I'm affected too" community confirmation button
+PHASE 2 (COMPLETED): Cluster 3 & Cluster 20 — Duplicate Detection & Community Confirmations
+  ├── Duplicate detection algorithm before complaint submission [DONE]
+  ├── Merged duplicate links & Primary ticket navigation [DONE]
+  └── "I'm affected too" community confirmation button & counter [DONE]
 
-PHASE 3: Cluster 6 & Cluster 15 — SLA Escalation & Student Feedback
-  ├── SLA timer calculation & breach warnings
-  └── Post-resolution 5-star rating & feedback review
+PHASE 3 (IN PROGRESS): Cluster 6 & Cluster 15 — SLA Escalation & Student Feedback
+  ├── Cluster 6: SLA timer calculation, breach warnings & auto-escalation [DONE]
+  └── Cluster 15: Post-resolution 5-star rating & feedback review [NEXT]
 
 PHASE 4: Cluster 4 & Cluster 5 — Incident Management & Smart Assignment
   ├── Incident creation & multi-ticket linking

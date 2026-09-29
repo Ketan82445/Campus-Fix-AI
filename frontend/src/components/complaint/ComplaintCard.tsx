@@ -1,6 +1,7 @@
 import React from 'react';
 import { Complaint } from '../../types';
 import { StatusBadge, PriorityBadge, CategoryBadge } from '../common/Badge';
+import { SlaCountdownBadge } from './SlaCountdownBadge';
 import { MapPin, Calendar, User, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -12,15 +13,27 @@ export const ComplaintCard: React.FC<{ complaint: Complaint; detailPath: string 
     <div className="bg-white rounded-xl border border-slate-200 hover:border-brand-300 shadow-2xs hover:shadow-md transition duration-200 p-5 flex flex-col justify-between">
       <div>
         {/* Header Badges */}
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
           <span className="font-mono text-xs font-semibold text-brand-700 bg-brand-50 px-2 py-0.5 rounded border border-brand-200">
             {complaint.complaintNumber}
           </span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <PriorityBadge priority={complaint.priority} />
             <StatusBadge status={complaint.status} />
           </div>
         </div>
+
+        {/* SLA Status Countdown */}
+        {complaint.resolutionDeadline && (
+          <div className="mb-2">
+            <SlaCountdownBadge
+              resolutionDeadline={complaint.resolutionDeadline}
+              slaBreached={complaint.slaBreached}
+              status={complaint.status}
+              escalationLevel={complaint.escalationLevel}
+            />
+          </div>
+        )}
 
         {/* Title & Description */}
         <Link to={detailPath} className="group">

@@ -3,15 +3,33 @@ import { analyticsApi } from '../../services/analyticsApi';
 import { complaintApi } from '../../services/complaintApi';
 import { AnalyticsOverview, Complaint } from '../../types';
 import { ComplaintCard } from '../../components/complaint/ComplaintCard';
+import { SlaOverviewCard } from '../../components/complaint/SlaOverviewCard';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, AlertTriangle, ShieldCheck, BarChart3, Users, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<AnalyticsOverview | null>(null);
   const [deptWorkload, setDeptWorkload] = useState<any[]>([]);
   const [recentComplaints, setRecentComplaints] = useState<Complaint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [filterBreached, setFilterBreached] = useState(false);
+
+  const fetchRecentComplaints = async (onlyBreached: boolean) => {
+    try {
+      const res = await complaintApi.getMany({ limit: 6, slaBreached: onlyBreached ? true : undefined });
+      if (res.success && res.data) {
+        setRecentComplaints(res.data.items);
+      }
+    } catch {}
+  };
+
+  const handleToggleBreached = (targetState?: boolean) => {
+    const nextVal = typeof targetState === 'boolean' ? targetState : !filterBreached;
+    setFilterBreached(nextVal);
+    fetchRecentComplaints(nextVal);
+  };
 
   useEffect(() => {
     Promise.all([
@@ -89,6 +107,12 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* SLA & Escalation Governance Card */}
+      <SlaOverviewCard
+        isAdmin={true}
+        onFilterBreached={() => handleToggleBreached(true)}
+      />
+
       {/* Department Workload Summary */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
         <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -110,19 +134,49 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Recent Complaints */}
+      {/* Complaints Section */}
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-base font-bold text-slate-900">Recent Campus Complaints</h2>
-          <Link to="/admin/complaints" className="text-xs text-brand-600 font-semibold hover:underline">
-            View All Complaints &rarr;
-          </Link>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900">
+              {filterBreached ? '⚠️ Breached / Overdue Complaints' : 'Recent Campus Complaints'}
+            </h2>
+            {filterBreached && (
+              <button
+                onClick={() => handleToggleBreached(false)}
+                className="text-[11px] text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full font-semibold hover:bg-rose-100 transition"
+              >
+                Clear Filter ✕
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => handleToggleBreached()}
+              className={`text-xs px-3 py-1.5 rounded-lg border font-semibold transition ${
+                filterBreached
+                  ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              {filterBreached ? 'Showing Breached Only' : 'Filter Overdue SLA'}
+            </button>
+            <Link to="/admin/complaints" className="text-xs text-brand-600 font-semibold hover:underline">
+              View All Complaints &rarr;
+            </Link>
+          </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recentComplaints.map(c => (
-            <ComplaintCard key={c.id} complaint={c} detailPath={`/student/complaints/${c.id}`} />
-          ))}
-        </div>
+        {recentComplaints.length === 0 ? (
+          <div className="bg-white p-8 rounded-xl border border-slate-200 text-center text-xs text-slate-500">
+            {filterBreached ? '🎉 No breached or overdue complaints at this time!' : 'No complaints recorded yet.'}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {recentComplaints.map(c => (
+              <ComplaintCard key={c.id} complaint={c} detailPath={`/student/complaints/${c.id}`} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import { Complaint, Status } from '../../types';
 import { ComplaintCard } from '../../components/complaint/ComplaintCard';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { EmptyState } from '../../components/common/EmptyState';
-import { Wrench, CheckCircle2, Clock, Play } from 'lucide-react';
+import { Wrench, CheckCircle2, Clock, Play, AlertTriangle } from 'lucide-react';
 
 export const TechnicianDashboard: React.FC = () => {
   const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -36,9 +36,11 @@ export const TechnicianDashboard: React.FC = () => {
   const assignedCount = complaints.filter(c => c.status === 'ASSIGNED').length;
   const inProgressCount = complaints.filter(c => c.status === 'IN_PROGRESS').length;
   const resolvedCount = complaints.filter(c => ['RESOLVED', 'CLOSED'].includes(c.status)).length;
+  const breachedCount = complaints.filter(c => c.slaBreached && !['RESOLVED', 'CLOSED'].includes(c.status)).length;
 
   const filtered = complaints.filter(c => {
     if (statusFilter === 'ALL') return true;
+    if (statusFilter === 'BREACHED') return c.slaBreached && !['RESOLVED', 'CLOSED'].includes(c.status);
     return c.status === statusFilter;
   });
 
@@ -51,7 +53,7 @@ export const TechnicianDashboard: React.FC = () => {
       </div>
 
       {/* Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <div className="flex justify-between items-center text-slate-500 text-xs mb-2">
             <span>New Assignments</span>
@@ -68,6 +70,14 @@ export const TechnicianDashboard: React.FC = () => {
           <p className="text-2xl font-black text-sky-600">{inProgressCount}</p>
         </div>
 
+        <div className={`p-4 rounded-xl border shadow-2xs ${breachedCount > 0 ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200'}`}>
+          <div className="flex justify-between items-center text-slate-500 text-xs mb-2">
+            <span>SLA Overdue</span>
+            <AlertTriangle className={`w-4 h-4 ${breachedCount > 0 ? 'text-rose-600' : 'text-slate-400'}`} />
+          </div>
+          <p className={`text-2xl font-black ${breachedCount > 0 ? 'text-rose-600' : 'text-slate-700'}`}>{breachedCount}</p>
+        </div>
+
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
           <div className="flex justify-between items-center text-slate-500 text-xs mb-2">
             <span>Completed Resolutions</span>
@@ -80,18 +90,18 @@ export const TechnicianDashboard: React.FC = () => {
       {/* Filter Tabs & Task List */}
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-          <div className="flex gap-2">
-            {['ALL', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'REOPENED'].map(st => (
+          <div className="flex flex-wrap gap-2">
+            {['ALL', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'REOPENED', 'BREACHED'].map(st => (
               <button
                 key={st}
                 onClick={() => setStatusFilter(st)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                   statusFilter === st
-                    ? 'bg-brand-600 text-white shadow-xs'
+                    ? st === 'BREACHED' ? 'bg-rose-600 text-white shadow-xs' : 'bg-brand-600 text-white shadow-xs'
                     : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                 }`}
               >
-                {st.replace('_', ' ')}
+                {st === 'BREACHED' ? '⚠️ Overdue SLA' : st.replace('_', ' ')}
               </button>
             ))}
           </div>

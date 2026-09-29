@@ -7,6 +7,7 @@ import { AssignmentService } from './assignmentService';
 import { NotificationService } from './notificationService';
 import { AuditService } from './auditService';
 import { ComplaintSimilarityService, CheckSimilarInput } from './complaintSimilarityService';
+import { SLAService } from './slaService';
 
 const AI_CONFIDENCE_THRESHOLD = 0.75; // AI auto-routing threshold
 
@@ -60,7 +61,10 @@ export class ComplaintService {
       initialStatus = Status.SUBMITTED;
     }
 
-    // 4. Execute DB Transaction
+    // 4. Calculate SLA Deadlines based on Priority
+    const { responseDeadline, resolutionDeadline } = await SLAService.calculateDeadlines(priority, new Date());
+
+    // 5. Execute DB Transaction
     const complaint = await prisma.$transaction(async (tx) => {
       const createdComplaint = await tx.complaint.create({
         data: {
@@ -76,6 +80,8 @@ export class ComplaintService {
           priority,
           status: initialStatus,
           aiConfidence: aiResult.confidence,
+          responseDeadline,
+          resolutionDeadline,
           createdById: creator.id,
           departmentId: targetDept ? targetDept.id : null,
           attachments:
@@ -184,6 +190,7 @@ export class ComplaintService {
       priority?: Priority;
       departmentId?: string;
       search?: string;
+      slaBreached?: boolean | string;
     }
   ) {
     const page = Math.max(1, params.page || 1);
@@ -207,6 +214,9 @@ export class ComplaintService {
     if (params.category) where.category = params.category;
     if (params.priority) where.priority = params.priority;
     if (params.departmentId) where.departmentId = params.departmentId;
+    if (params.slaBreached !== undefined) {
+      where.slaBreached = params.slaBreached === true || params.slaBreached === 'true';
+    }
 
     if (params.search) {
       where.AND = [
@@ -358,8 +368,24 @@ export class ComplaintService {
     }
 
     const updatedData: any = { status: newStatus };
-    if (newStatus === Status.RESOLVED) updatedData.resolvedAt = new Date();
-    if (newStatus === Status.CLOSED) updatedData.closedAt = new Date();
+    const now = new Date();
+
+    if (newStatus === Status.RESOLVED) {
+      updatedData.resolvedAt = now;
+      // Evaluate if resolution exceeded SLA deadline
+      if (complaint.resolutionDeadline && now > complaint.resolutionDeadline) {
+        updatedData.slaBreached = true;
+      }
+    }
+
+    if ((newStatus === Status.IN_PROGRESS || newStatus === Status.ASSIGNED) && !complaint.respondedAt) {
+      updatedData.respondedAt = now;
+      if (complaint.responseDeadline && now > complaint.responseDeadline) {
+        updatedData.slaBreached = true;
+      }
+    }
+
+    if (newStatus === Status.CLOSED) updatedData.closedAt = now;
 
     const updatedComplaint = await prisma.$transaction(async (tx) => {
       const comp = await tx.complaint.update({
