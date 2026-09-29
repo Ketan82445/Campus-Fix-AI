@@ -286,3 +286,26 @@ export interface TechnicianPerformance {
   ratingDistribution: Record<number, number>;
 }
 
+
+export enum IncidentSeverity {
+  MINOR = 'MINOR',
+  MAJOR = 'MAJOR',
+  CRITICAL = 'CRITICAL'
+}
+
+export interface Incident {
+  id: string;
+  title: string;
+  description: string;
+  category: Category;
+  severity: IncidentSeverity;
+  status: Status;
+  location?: string;
+  createdAt: string;
+  resolvedAt?: string;
+  complaints?: Complaint[];
+  _count?: {
+    complaints: number;
+  };
+}
+

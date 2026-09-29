@@ -145,6 +145,9 @@ model Complaint {
   upvotes        ComplaintUpvote[]
   feedback       ComplaintFeedback?
 
+  incidentId     String?
+  incident       Incident?  @relation(fields: [incidentId], references: [id], onDelete: SetNull)
+
   @@index([status])
   @@index([category])
   @@index([priority])
@@ -295,5 +298,31 @@ model ComplaintFeedback {
 
   @@index([studentId])
   @@index([rating])
+}
+
+
+
+enum IncidentSeverity {
+  MINOR
+  MAJOR
+  CRITICAL
+}
+
+model Incident {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  category    Category
+  severity    IncidentSeverity @default(MAJOR)
+  status      Status   @default(IN_PROGRESS)
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  resolvedAt  DateTime?
+
+  complaints  Complaint[]
+  
+  @@index([status])
+  @@index([category])
 }
 
