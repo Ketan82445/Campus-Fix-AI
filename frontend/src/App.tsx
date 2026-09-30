@@ -16,6 +16,9 @@ import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminAIReviewPage } from './pages/admin/AdminAIReviewPage';
 import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
 import { AdminUserManagement } from './pages/admin/AdminUserManagement';
+import { AdminAssetsPage } from './pages/admin/AdminAssetsPage';
+import { AdminInventoryPage } from './pages/admin/AdminInventoryPage';
+import { TechnicianMaintenancePage } from './pages/technician/TechnicianMaintenancePage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { Role } from './types';
 
@@ -138,6 +141,14 @@ export const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/technician/maintenance"
+            element={
+              <ProtectedRoute allowedRoles={['TECHNICIAN']}>
+                <TechnicianMaintenancePage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Admin Protected Routes */}
           <Route
@@ -177,6 +188,22 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <AdminUserManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/assets"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AdminAssetsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/inventory"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AdminInventoryPage />
               </ProtectedRoute>
             }
           />

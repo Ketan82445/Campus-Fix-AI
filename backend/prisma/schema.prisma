@@ -79,6 +79,7 @@ model User {
   comments           ComplaintComment[]
   upvotes            ComplaintUpvote[]
   feedbacks          ComplaintFeedback[]
+  maintenances       AssetMaintenance[]
 
   @@index([email])
   @@index([role])
@@ -94,6 +95,7 @@ model Department {
 
   users      User[]
   complaints Complaint[]
+  assets     Asset[]
 }
 
 model Complaint {
@@ -148,6 +150,9 @@ model Complaint {
   incidentId     String?
   incident       Incident?  @relation(fields: [incidentId], references: [id], onDelete: SetNull)
 
+  assetId        String?
+  asset          Asset?     @relation(fields: [assetId], references: [id], onDelete: SetNull)
+
   @@index([status])
   @@index([category])
   @@index([priority])
@@ -158,6 +163,7 @@ model Complaint {
   @@index([slaBreached])
   @@index([resolutionDeadline])
   @@index([createdAt])
+  @@index([assetId])
 }
 
 model ComplaintUpvote {
@@ -326,3 +332,111 @@ model Incident {
   @@index([category])
 }
 
+
+
+enum AssetStatus {
+  ACTIVE
+  MAINTENANCE
+  BROKEN
+  RETIRED
+}
+
+enum MaintenanceType {
+  PREVENTIVE
+  CORRECTIVE
+  EMERGENCY
+}
+
+enum MaintenanceStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Asset {
+  id               String       @id @default(uuid())
+  assetCode        String       @unique
+  qrCode           String?      @unique
+  name             String
+  type             String
+  manufacturer     String?
+  model            String?
+  serialNumber     String?
+  location         String
+  building         String?
+  floor            String?
+  room             String?
+  departmentId     String?
+  department       Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  purchaseDate     DateTime?
+  warrantyExpires  DateTime?
+  status           AssetStatus  @default(ACTIVE)
+  cost             Float?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  maintenances     AssetMaintenance[]
+  complaints       Complaint[]
+
+  @@index([assetCode])
+  @@index([status])
+  @@index([location])
+  @@index([departmentId])
+}
+
+model AssetMaintenance {
+  id              String            @id @default(uuid())
+  assetId         String
+  asset           Asset             @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  title           String
+  description     String?
+  type            MaintenanceType
+  status          MaintenanceStatus @default(SCHEDULED)
+  scheduledDate   DateTime?
+  completedDate   DateTime?
+  technicianId    String?
+  technician      User?             @relation(fields: [technicianId], references: [id], onDelete: SetNull)
+  cost            Float?            @default(0)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  partsUsed       MaintenancePart[]
+
+  @@index([assetId])
+  @@index([technicianId])
+  @@index([status])
+  @@index([type])
+}
+
+model InventoryItem {
+  id              String   @id @default(uuid())
+  sku             String   @unique
+  name            String
+  description     String?
+  quantity        Int      @default(0)
+  minStockLevel   Int      @default(5)
+  cost            Float?
+  supplier        String?
+  location        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  usedIn          MaintenancePart[]
+
+  @@index([sku])
+}
+
+model MaintenancePart {
+  id              String           @id @default(uuid())
+  maintenanceId   String
+  maintenance     AssetMaintenance @relation(fields: [maintenanceId], references: [id], onDelete: Cascade)
+  inventoryItemId String
+  inventoryItem   InventoryItem    @relation(fields: [inventoryItemId], references: [id])
+  quantity        Int
+  costAtUse       Float?
+  createdAt       DateTime         @default(now())
+
+  @@index([maintenanceId])
+  @@index([inventoryItemId])
+}

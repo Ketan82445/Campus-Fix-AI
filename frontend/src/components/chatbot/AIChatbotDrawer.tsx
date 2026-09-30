@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { complaintApi } from '../../services/complaintApi';
+import { api } from '../../services/api';
 import { Complaint } from '../../types';
 import { Bot, X, Send, User, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 
@@ -38,51 +39,50 @@ export const AIChatbotDrawer: React.FC<{ isOpen: boolean; onClose: () => void }>
     e.preventDefault();
     if (!input.trim()) return;
 
+    const userText = input;
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
       sender: 'user',
-      text: input,
+      text: userText,
       timestamp: new Date()
     };
 
+    // Format chat history for OpenAI API
+    const chatHistory = messages.map(m => ({
+      role: m.sender === 'ai' ? 'assistant' : 'user',
+      content: m.text
+    })).concat([{ role: 'user', content: userText }]);
+
     setMessages(prev => [...prev, userMsg]);
-    const query = input.toLowerCase();
     setInput('');
     setLoading(true);
 
-    setTimeout(() => {
-      let reply = "";
-
-      if (query.includes('status') || query.includes('my complaint') || query.includes('track')) {
-        if (userComplaints.length === 0) {
-          reply = "You currently have no active complaints submitted in the system. You can create a new complaint using the '+ Create Complaint' button!";
-        } else {
-          const listStr = userComplaints
-            .map(c => `• [${c.complaintNumber}] "${c.title}" -> Status: ${c.status.replace('_', ' ')} (${c.priority} Priority)`)
-            .join('\n');
-          reply = `Here is the real-time status of your logged complaints from our backend database:\n\n${listStr}`;
-        }
-      } else if (query.includes('wifi') || query.includes('internet') || query.includes('network')) {
-        reply = "For Wi-Fi or internet connection issues in labs or hostels, submit a complaint under the 'IT & Network Services' category. Our automated AI model will route it to IT technicians.";
-      } else if (query.includes('water') || query.includes('leak') || query.includes('tap') || query.includes('washroom')) {
-        reply = "Water leaks, washroom issues, or drainage problems belong to the 'Plumbing & Sanitation' department. High priority issues like major leaks are immediately auto-routed!";
-      } else if (query.includes('light') || query.includes('fan') || query.includes('spark') || query.includes('power')) {
-        reply = "Electrical problems like broken switches, flickering lights, or fan issues should be filed under 'Electrical Maintenance'. Hazardous issues (e.g. sparks) get flagged as CRITICAL.";
-      } else {
-        reply = "CampusFix AI processes all submitted complaints through our trained Machine Learning pipeline to predict Category, Priority, and Department automatically. How else can I assist you with your campus issue?";
-      }
-
+    try {
+      const response = await api.post('/chat', { messages: chatHistory });
+      const aiReply = response.data.content;
+      
       setMessages(prev => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
           sender: 'ai',
-          text: reply,
+          text: aiReply,
           timestamp: new Date()
         }
       ]);
+    } catch (error) {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          sender: 'ai',
+          text: "I'm sorry, I cannot reach the AI server right now. Make sure the GEMINI_API_KEY is configured in the backend `.env` file.",
+          timestamp: new Date()
+        }
+      ]);
+    } finally {
       setLoading(false);
-    }, 600);
+    }
   };
 
   if (!isOpen) return null;

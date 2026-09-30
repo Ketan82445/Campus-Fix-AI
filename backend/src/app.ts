@@ -16,6 +16,9 @@ import userRoutes from './routes/userRoutes';
 import slaRoutes from './routes/slaRoutes';
 import feedbackRoutes from './routes/feedbackRoutes';
 import incidentRoutes from './routes/incidentRoutes';
+import assetRoutes from './routes/assetRoutes';
+import inventoryRoutes from './routes/inventoryRoutes';
+import chatRoutes from './routes/chatRoutes';
 
 const app = express();
 
@@ -80,6 +83,9 @@ app.use(['/api/users', '/users'], userRoutes);
 app.use(['/api/sla', '/sla'], slaRoutes);
 app.use(['/api/feedback', '/feedback'], feedbackRoutes);
 app.use(['/api/incidents', '/incidents'], incidentRoutes);
+app.use(['/api/assets', '/assets'], assetRoutes);
+app.use(['/api/inventory', '/inventory'], inventoryRoutes);
+app.use(['/api/chat', '/chat'], chatRoutes);
 
 // 404 Route Fallback
 app.use('*', (req, res) => {

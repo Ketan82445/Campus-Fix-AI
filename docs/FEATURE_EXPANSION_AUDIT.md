@@ -35,9 +35,9 @@ This audit evaluates the codebase against the **35 Feature Expansion Clusters** 
 | **9** | Campus Heatmap Visualization | No | No | No | No | **NOT IMPLEMENTED** | Implement accessible campus location grid with color-coded severity metrics and numeric indicators. |
 | **10** | Recurring Issue Detection Engine | Yes | Yes | Yes | No | **PARTIALLY IMPLEMENTED** | `getRecurringIssues()` exists in backend; add student/admin notification and proactive flag badge in UI. |
 | **11** | Preventive Maintenance Recommendations | No | No | No | No | **NOT IMPLEMENTED** | Rule-based engine analyzing repeated complaints over 30 days to suggest equipment servicing. |
-| **12** | Asset Management System | No | No | No | No | **NOT IMPLEMENTED** | Add `Asset` model (projectors, ACs, routers), link complaints to assets. |
-| **13** | Asset Maintenance History & Timeline | No | No | No | No | **NOT IMPLEMENTED** | Build timeline view linking past complaints and parts used per asset. |
-| **14** | Maintenance Spare Parts Inventory | No | No | No | No | **NOT IMPLEMENTED** | Add lightweight `MaintenancePart` model with minimum stock alerts. |
+| **12** | Asset Management System | Yes | Yes | No | No | **IMPLEMENTED** | Added `Asset` model (projectors, ACs, routers), `AdminAssetsPage` UI, backend routing. |
+| **13** | Asset Maintenance History & Timeline | Yes | Yes | No | No | **IMPLEMENTED** | Built `AssetMaintenance` model linking past complaints, technician logic on UI. |
+| **14** | Maintenance Spare Parts Inventory | Yes | Yes | No | No | **IMPLEMENTED** | Added `InventoryItem` and `MaintenancePart` models, full `AdminInventoryPage` stock UI. |
 | **15** | Student Resolution Feedback (Ratings & Reviews) | No | No | No | No | **NOT IMPLEMENTED** | Add `ComplaintFeedback` model with 1-5 star ratings, feedback comments, and duplicate prevention. |
 | **16** | Multi-Role Notification Infrastructure | Yes | Yes | Yes | No | **PARTIALLY IMPLEMENTED** | In-app notification model and pages exist; add SLA breach, escalation, and incident notification types. |
 | **17** | Campus AI Interactive Assistant | Yes | Partial | Yes | No | **PARTIALLY IMPLEMENTED** | `AIChatbotDrawer.tsx` exists with static responses; connect to backend guidance API with strict RBAC. |

@@ -9,7 +9,8 @@ import {
   Sparkles,
   BarChart3,
   Users,
-  Building2
+  Building2,
+  Package
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -67,6 +68,12 @@ export const Sidebar: React.FC = () => {
               >
                 <Wrench className="w-4 h-4 text-sky-600" /> Assigned Tasks
               </NavLink>
+              <NavLink
+                to="/technician/maintenance"
+                className={({ isActive }) => `${baseStyle} ${isActive ? activeStyle : inactiveStyle}`}
+              >
+                <Building2 className="w-4 h-4 text-emerald-600" /> Asset Maintenance
+              </NavLink>
             </nav>
           </div>
         )}
@@ -105,6 +112,18 @@ export const Sidebar: React.FC = () => {
                 className={({ isActive }) => `${baseStyle} ${isActive ? activeStyle : inactiveStyle}`}
               >
                 <Users className="w-4 h-4" /> User Directory
+              </NavLink>
+              <NavLink
+                to="/admin/assets"
+                className={({ isActive }) => `${baseStyle} ${isActive ? activeStyle : inactiveStyle}`}
+              >
+                <Building2 className="w-4 h-4 text-emerald-600" /> Assets & Maintenance
+              </NavLink>
+              <NavLink
+                to="/admin/inventory"
+                className={({ isActive }) => `${baseStyle} ${isActive ? activeStyle : inactiveStyle}`}
+              >
+                <Package className="w-4 h-4 text-amber-600" /> Spare Parts Inventory
               </NavLink>
             </nav>
           </div>
