@@ -10,17 +10,21 @@ import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { UpvoteButton } from '../../components/complaint/UpvoteButton';
 import { SlaCountdownBadge } from '../../components/complaint/SlaCountdownBadge';
 import { FeedbackBanner } from '../../components/complaint/FeedbackBanner';
+import { CreateWorkOrderModal } from '../../components/workOrder/CreateWorkOrderModal';
+import { useAuth } from '../../context/AuthContext';
 import { ArrowLeft, MapPin, Calendar, CheckCircle2, RefreshCw, Send, MessageSquare, Wrench, AlertTriangle, Users } from 'lucide-react';
 
 export const StudentComplaintDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [complaint, setComplaint] = useState<Complaint | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [commentText, setCommentText] = useState('');
   const [reopenReason, setReopenReason] = useState('');
   const [showReopenModal, setShowReopenModal] = useState(false);
+  const [showWorkOrderModal, setShowWorkOrderModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const fetchComplaint = async () => {
@@ -157,9 +161,22 @@ export const StudentComplaintDetails: React.FC = () => {
           </div>
         )}
 
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 mb-2">{complaint.title}</h1>
-          <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{complaint.description}</p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 mb-2">{complaint.title}</h1>
+            <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{complaint.description}</p>
+          </div>
+          {user?.role === 'ADMIN' && (
+            <div className="flex gap-2 shrink-0 ml-4">
+              <button 
+                onClick={() => setShowWorkOrderModal(true)}
+                className="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5"
+              >
+                <Wrench className="w-3.5 h-3.5" />
+                Assign Work Order
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500 pt-2 border-t border-slate-100">
@@ -296,6 +313,18 @@ export const StudentComplaintDetails: React.FC = () => {
           </button>
         </form>
       </div>
+
+      {showWorkOrderModal && complaint && (
+        <CreateWorkOrderModal
+          complaintId={complaint.id}
+          onClose={() => setShowWorkOrderModal(false)}
+          onSuccess={(wo) => {
+            setShowWorkOrderModal(false);
+            alert(`Work order created and assigned!`);
+            fetchComplaint();
+          }}
+        />
+      )}
 
       {/* Reopen Modal */}
       {showReopenModal && (

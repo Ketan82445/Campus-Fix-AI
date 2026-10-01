@@ -151,6 +151,7 @@ export interface Complaint {
   comments?: ComplaintComment[];
   attachments?: ComplaintAttachment[];
   feedback?: ComplaintFeedback | null;
+  workOrder?: WorkOrder | null;
   upvoteCount?: number;
   hasUpvoted?: boolean;
   duplicateOfId?: string | null;
@@ -307,5 +308,65 @@ export interface Incident {
   _count?: {
     complaints: number;
   };
+}
+
+
+export type WorkOrderStatus = 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD' | 'COMPLETED' | 'CANCELLED';
+
+export interface WorkOrderPart {
+  id: string;
+  workOrderId: string;
+  name: string;
+  quantity: number;
+  cost?: number;
+}
+
+export interface Attachment {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
+  mimeType: string;
+  category?: string;
+  createdAt: string;
+}
+
+export interface WorkOrder {
+  id: string;
+  workOrderNumber: string;
+  complaintId: string;
+  technicianId: string;
+  status: WorkOrderStatus;
+  description: string;
+  priority: Priority;
+  scheduledAt?: string;
+  startedAt?: string;
+  completedAt?: string;
+  estimatedHours?: number;
+  actualHours?: number;
+  notes?: string;
+  checklist?: Record<string, boolean>;
+  createdAt: string;
+  updatedAt: string;
+  
+  complaint?: {
+    id: string;
+    complaintNumber: string;
+    title: string;
+    location: string;
+  };
+  technician?: {
+    id: string;
+    name: string;
+  };
+  parts?: WorkOrderPart[];
+  attachments?: Attachment[];
+}
+
+export interface WorkOrderMetrics {
+  totalActive: number;
+  completedToday: number;
+  avgCompletionTimeHours: number;
+  pendingParts: number;
 }
 

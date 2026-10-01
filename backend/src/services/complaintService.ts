@@ -290,6 +290,12 @@ export class ComplaintService {
           include: { author: { select: { id: true, name: true, role: true } } }
         },
         attachments: true,
+        workOrder: {
+          include: {
+            parts: { include: { inventory: true } },
+            technician: { select: { id: true, name: true } }
+          }
+        },
         duplicateOf: {
           select: { id: true, complaintNumber: true, title: true, status: true }
         },

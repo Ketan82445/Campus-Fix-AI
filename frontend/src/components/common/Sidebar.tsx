@@ -102,6 +102,12 @@ export const Sidebar: React.FC = () => {
                 <ClipboardList className="w-4 h-4" /> All Complaints
               </NavLink>
               <NavLink
+                to="/admin/work-orders"
+                className={({ isActive }) => `${baseStyle} ${isActive ? activeStyle : inactiveStyle}`}
+              >
+                <Wrench className="w-4 h-4 text-sky-600" /> Work Orders
+              </NavLink>
+              <NavLink
                 to="/admin/analytics"
                 className={({ isActive }) => `${baseStyle} ${isActive ? activeStyle : inactiveStyle}`}
               >

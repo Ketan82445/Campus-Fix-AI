@@ -9,6 +9,7 @@ import { AttachmentGallery } from '../../components/complaint/AttachmentGallery'
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { MarkDuplicateModal } from '../../components/complaint/MarkDuplicateModal';
 import { SlaCountdownBadge } from '../../components/complaint/SlaCountdownBadge';
+import { TechnicianWorkOrderView } from '../../components/workOrder/TechnicianWorkOrderView';
 import { ArrowLeft, MapPin, Calendar, CheckCircle2, Play, Send, MessageSquare, User, Copy, AlertTriangle, Users } from 'lucide-react';
 
 export const TechnicianComplaintDetails: React.FC = () => {
@@ -215,6 +216,13 @@ export const TechnicianComplaintDetails: React.FC = () => {
           <StatusTimeline history={complaint.statusHistory} />
         </div>
       </div>
+
+      {complaint.workOrder && (
+        <TechnicianWorkOrderView 
+          workOrder={complaint.workOrder} 
+          onUpdate={fetchComplaint} 
+        />
+      )}
 
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
         <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
