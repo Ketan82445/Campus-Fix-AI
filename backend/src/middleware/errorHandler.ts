@@ -24,6 +24,11 @@ export const errorHandler = (
     return sendError(res, 'Invalid or expired token', 401, 'UNAUTHORIZED');
   }
 
+  // Preserve upstream API service unavailability messages (e.g. Gemini 503 High Demand)
+  if (err.status === 503 || (err.message && err.message.includes('503 Service Unavailable'))) {
+    return sendError(res, err.message, 503, 'SERVICE_UNAVAILABLE');
+  }
+
   return sendError(
     res,
     process.env.NODE_ENV === 'production' ? 'An internal server error occurred' : err.message || 'Internal Server Error',
