@@ -23,6 +23,9 @@ import workOrderRoutes from './routes/workOrderRoutes';
 
 const app = express();
 
+// Trust proxy for Vercel deployment so rate limiter can read X-Forwarded-For properly
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(helmet());
 

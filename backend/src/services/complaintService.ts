@@ -527,8 +527,19 @@ export class ComplaintService {
     comment: string,
     isInternal: boolean = false
   ) {
-    const complaint = await prisma.complaint.findUnique({ where: { id: complaintId } });
+    const complaint = await prisma.complaint.findUnique({ 
+      where: { id: complaintId },
+      include: { upvotes: { where: { userId: author.id } } }
+    });
     if (!complaint) throw new AppError('Complaint not found', 404, 'NOT_FOUND');
+
+    if (author.role === Role.STUDENT && complaint.createdById !== author.id && complaint.upvotes.length === 0) {
+      throw new AppError('Access denied: You can only comment on your own complaints or complaints you have upvoted', 403, 'FORBIDDEN');
+    }
+    
+    if (author.role === Role.TECHNICIAN && complaint.assignedTechnicianId !== author.id && complaint.departmentId !== author.departmentId) {
+      throw new AppError('Access denied: Technicians can only comment on complaints in their department or assigned to them', 403, 'FORBIDDEN');
+    }
 
     const newComment = await prisma.complaintComment.create({
       data: {

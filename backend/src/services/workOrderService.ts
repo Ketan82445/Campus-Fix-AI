@@ -447,6 +447,10 @@ export class WorkOrderService {
     const workOrder = await prisma.workOrder.findUnique({ where: { id } });
     if (!workOrder) throw new AppError('Work Order not found', 404, 'NOT_FOUND');
 
+    if (user.role === Role.TECHNICIAN && workOrder.technicianId !== user.id) {
+      throw new AppError('Unauthorized: You can only add parts to your assigned work orders', 403, 'FORBIDDEN');
+    }
+
     const inventory = await prisma.inventoryItem.findUnique({
       where: { id: data.inventoryId }
     });
@@ -509,6 +513,10 @@ export class WorkOrderService {
   public static async updateChecklist(id: string, checklist: any, user: UserPayload) {
     const workOrder = await prisma.workOrder.findUnique({ where: { id } });
     if (!workOrder) throw new AppError('Work Order not found', 404, 'NOT_FOUND');
+
+    if (user.role === Role.TECHNICIAN && workOrder.technicianId !== user.id) {
+      throw new AppError('Unauthorized: You can only update checklists on your assigned work orders', 403, 'FORBIDDEN');
+    }
 
     const updated = await prisma.workOrder.update({
       where: { id },
@@ -597,6 +605,13 @@ export class WorkOrderService {
   ) {
     const workOrder = await prisma.workOrder.findUnique({ where: { id } });
     if (!workOrder) throw new AppError('Work Order not found', 404, 'NOT_FOUND');
+
+    if (user.role === Role.TECHNICIAN && workOrder.technicianId !== user.id) {
+      throw new AppError('Unauthorized: You can only add attachments to your assigned work orders', 403, 'FORBIDDEN');
+    }
+    if (user.role === Role.STUDENT) {
+      throw new AppError('Unauthorized: Students cannot modify work orders', 403, 'FORBIDDEN');
+    }
 
     const attachment = await prisma.fileAttachment.create({
       data: {
