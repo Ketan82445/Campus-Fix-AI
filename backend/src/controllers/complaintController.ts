@@ -28,7 +28,7 @@ export class ComplaintController {
           floor: validated.floor,
           room: validated.room,
           language: validated.language,
-          attachments: validated.attachments
+          attachments: validated.attachments as any
         }
       );
       return sendSuccess(res, complaint, 'Complaint logged successfully', 201);
@@ -92,7 +92,7 @@ export class ComplaintController {
     try {
       const { id } = req.params;
       const validated = reviewAIPredictionSchema.parse(req.body);
-      const result = await ComplaintService.reviewAIPrediction(id, req.user!, validated);
+      const result = await ComplaintService.reviewAIPrediction(id, req.user!, validated as any);
       return sendSuccess(res, result, 'AI prediction reviewed and complaint routed successfully');
     } catch (error) {
       next(error);
@@ -151,8 +151,8 @@ export class ComplaintController {
       const validated = checkSimilarSchema.parse(req.body);
       const matches = await ComplaintService.checkSimilarComplaints({
         ...validated,
-        userId: req.user?.id
-      });
+        userId: req.user!.id
+      } as any);
       return sendSuccess(res, matches, 'Similar complaints checked successfully');
     } catch (error) {
       next(error);

@@ -8,7 +8,7 @@ export class AuthController {
   public static async register(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const validated = registerSchema.parse(req.body);
-      const result = await AuthService.register(validated);
+      const result = await AuthService.register(validated as any);
       return sendSuccess(res, result, 'User registered successfully', 201);
     } catch (error) {
       next(error);
