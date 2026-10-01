@@ -1,42 +1,56 @@
 import { api } from './api';
-import { WorkOrder, WorkOrderMetrics, Attachment } from '../types';
+import { WorkOrder, WorkOrderMetrics, Attachment, ApiResponse, PaginatedResponse } from '../types';
 
 export const workOrderApi = {
   // Create a new work order from a complaint (Admin only)
-  create: (data: {
+  create: async (data: {
     complaintId: string;
     technicianId: string;
     description: string;
     scheduledAt?: Date | string;
     estimatedHours?: number;
     priority?: string;
-  }) => api.post<{ success: boolean; data: WorkOrder }>('/work-orders', data),
+  }): Promise<ApiResponse<WorkOrder>> => {
+    return api.post('/work-orders', data);
+  },
 
   // Get all work orders
-  getAll: (params?: any) => api.get<{ success: boolean; data: { items: WorkOrder[]; pagination: any } }>('/work-orders', { params }),
+  getAll: async (params?: any): Promise<ApiResponse<PaginatedResponse<WorkOrder>>> => {
+    return api.get('/work-orders', { params });
+  },
 
   // Get metrics for dashboards
-  getMetrics: () => api.get<{ success: boolean; data: WorkOrderMetrics }>('/work-orders/metrics'),
+  getMetrics: async (): Promise<ApiResponse<WorkOrderMetrics>> => {
+    return api.get('/work-orders/metrics');
+  },
 
   // Get a single work order
-  getById: (id: string) => api.get<{ success: boolean; data: WorkOrder }>(`/work-orders/${id}`),
+  getById: async (id: string): Promise<ApiResponse<WorkOrder>> => {
+    return api.get(`/work-orders/${id}`);
+  },
 
   // Update general work order details
-  update: (id: string, data: Partial<WorkOrder>) => api.patch<{ success: boolean; data: WorkOrder }>(`/work-orders/${id}`, data),
+  update: async (id: string, data: Partial<WorkOrder>): Promise<ApiResponse<WorkOrder>> => {
+    return api.patch(`/work-orders/${id}`, data);
+  },
 
   // Update work order status
-  updateStatus: (id: string, status: string, notes?: string) => 
-    api.patch<{ success: boolean; data: WorkOrder }>(`/work-orders/${id}/status`, { status, notes }),
+  updateStatus: async (id: string, status: string, notes?: string): Promise<ApiResponse<WorkOrder>> => {
+    return api.patch(`/work-orders/${id}/status`, { status, notes });
+  },
 
-  // Add an attachment (using our new Supabase Storage!)
-  addAttachment: (id: string, fileData: { fileName: string; fileData: string; mimeType: string; category?: string }) => 
-    api.post<{ success: boolean; data: Attachment }>(`/work-orders/${id}/attachments`, fileData),
+  // Add an attachment
+  addAttachment: async (id: string, fileData: { fileName: string; fileData: string; mimeType: string; category?: string }): Promise<ApiResponse<Attachment>> => {
+    return api.post(`/work-orders/${id}/attachments`, fileData);
+  },
 
   // Add parts used to a work order
-  addPart: (id: string, part: { partId?: string; name: string; quantity: number; cost?: number }) => 
-    api.post<{ success: boolean; data: any }>(`/work-orders/${id}/parts`, part),
+  addPart: async (id: string, part: { partId?: string; name: string; quantity: number; cost?: number }): Promise<ApiResponse<any>> => {
+    return api.post(`/work-orders/${id}/parts`, part);
+  },
 
   // Update safety/inspection checklist
-  updateChecklist: (id: string, checklist: Record<string, boolean>) => 
-    api.patch<{ success: boolean; data: any }>(`/work-orders/${id}/checklist`, { checklist })
+  updateChecklist: async (id: string, checklist: Record<string, boolean>): Promise<ApiResponse<any>> => {
+    return api.patch(`/work-orders/${id}/checklist`, { checklist });
+  }
 };

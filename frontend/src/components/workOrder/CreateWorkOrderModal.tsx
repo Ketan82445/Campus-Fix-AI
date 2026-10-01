@@ -25,7 +25,7 @@ export const CreateWorkOrderModal: React.FC<Props> = ({ complaintId, onClose, on
     // Fetch available technicians
     const fetchTechs = async () => {
       try {
-        const res = await userApi.getUsersByRole('TECHNICIAN');
+        const res = await userApi.getUsers('TECHNICIAN');
         if (res.success && res.data) {
           setTechnicians(res.data);
         }
