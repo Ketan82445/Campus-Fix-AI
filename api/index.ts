@@ -12,6 +12,7 @@ if (!process.env.JWT_SECRET) {
 }
 if (!process.env.JWT_REFRESH_SECRET) {
   process.env.JWT_REFRESH_SECRET = 'campusfix_super_secret_refresh_key_2026';
+}
 if (!process.env.NODE_ENV) {
   process.env.NODE_ENV = 'production';
 }
