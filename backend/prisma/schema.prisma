@@ -4,8 +4,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -58,28 +59,31 @@ enum AssignmentStatus {
 }
 
 model User {
-  id            String      @id @default(uuid())
-  name          String
-  email         String      @unique
-  passwordHash  String
-  role          Role        @default(STUDENT)
-  phone         String?
-  departmentId  String?
-  department    Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id           String      @id @default(uuid())
+  name         String
+  email        String      @unique
+  passwordHash String
+  role         Role        @default(STUDENT)
+  phone        String?
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
-  createdComplaints  Complaint[]         @relation("ComplaintCreator")
-  assignedComplaints Complaint[]         @relation("AssignedTechnician")
-  assignments        Assignment[]        @relation("TechnicianAssignments")
-  assignedByMe       Assignment[]        @relation("AssignmentCreator")
-  statusHistory      StatusHistory[]
-  notifications      Notification[]
-  auditLogs          AuditLog[]
-  comments           ComplaintComment[]
-  upvotes            ComplaintUpvote[]
-  feedbacks          ComplaintFeedback[]
-  maintenances       AssetMaintenance[]
+  createdComplaints    Complaint[]         @relation("ComplaintCreator")
+  assignedComplaints   Complaint[]         @relation("AssignedTechnician")
+  assignments          Assignment[]        @relation("TechnicianAssignments")
+  assignedByMe         Assignment[]        @relation("AssignmentCreator")
+  statusHistory        StatusHistory[]
+  notifications        Notification[]
+  auditLogs            AuditLog[]
+  comments             ComplaintComment[]
+  upvotes              ComplaintUpvote[]
+  feedbacks            ComplaintFeedback[]
+  maintenances         AssetMaintenance[]
+  assignedWorkOrders   WorkOrder[]         @relation("WorkOrderTechnician")
+  supervisedWorkOrders WorkOrder[]         @relation("WorkOrderSupervisor")
+  uploadedFiles        FileAttachment[]
 
   @@index([email])
   @@index([role])
@@ -96,62 +100,64 @@ model Department {
   users      User[]
   complaints Complaint[]
   assets     Asset[]
+  WorkOrder  WorkOrder[]
 }
 
 model Complaint {
-  id                   String     @id @default(uuid())
-  complaintNumber      String     @unique
-  title                String
-  description          String
-  category             Category   @default(OTHER)
-  priority             Priority   @default(MEDIUM)
-  location             String
-  status               Status     @default(SUBMITTED)
-  aiConfidence         Float?
-  
-  createdById          String
-  createdBy            User       @relation("ComplaintCreator", fields: [createdById], references: [id], onDelete: Cascade)
-  
-  departmentId         String?
-  department           Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  
+  id              String   @id @default(uuid())
+  complaintNumber String   @unique
+  title           String
+  description     String
+  category        Category @default(OTHER)
+  priority        Priority @default(MEDIUM)
+  location        String
+  status          Status   @default(SUBMITTED)
+  aiConfidence    Float?
+
+  createdById String
+  createdBy   User   @relation("ComplaintCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
   assignedTechnicianId String?
-  assignedTechnician   User?      @relation("AssignedTechnician", fields: [assignedTechnicianId], references: [id], onDelete: SetNull)
+  assignedTechnician   User?   @relation("AssignedTechnician", fields: [assignedTechnicianId], references: [id], onDelete: SetNull)
 
-  building             String?
-  floor                String?
-  room                 String?
-  language             String?    @default("en")
+  building String?
+  floor    String?
+  room     String?
+  language String? @default("en")
 
-  createdAt            DateTime   @default(now())
-  updatedAt            DateTime   @updatedAt
-  resolvedAt           DateTime?
-  closedAt             DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  resolvedAt DateTime?
+  closedAt   DateTime?
 
-  duplicateOfId        String?
-  duplicateOf          Complaint?  @relation("ComplaintDuplicates", fields: [duplicateOfId], references: [id], onDelete: SetNull)
-  duplicates           Complaint[] @relation("ComplaintDuplicates")
+  duplicateOfId String?
+  duplicateOf   Complaint?  @relation("ComplaintDuplicates", fields: [duplicateOfId], references: [id], onDelete: SetNull)
+  duplicates    Complaint[] @relation("ComplaintDuplicates")
 
-  responseDeadline     DateTime?
-  resolutionDeadline   DateTime?
-  respondedAt          DateTime?
-  slaBreached          Boolean     @default(false)
-  escalationLevel      Int         @default(0)
-  escalatedAt          DateTime?
+  responseDeadline   DateTime?
+  resolutionDeadline DateTime?
+  respondedAt        DateTime?
+  slaBreached        Boolean   @default(false)
+  escalationLevel    Int       @default(0)
+  escalatedAt        DateTime?
 
-  assignments    Assignment[]
-  statusHistory  StatusHistory[]
-  aiPredictions  AIPrediction[]
-  comments       ComplaintComment[]
-  attachments    ComplaintAttachment[]
-  upvotes        ComplaintUpvote[]
-  feedback       ComplaintFeedback?
+  assignments   Assignment[]
+  statusHistory StatusHistory[]
+  aiPredictions AIPrediction[]
+  comments      ComplaintComment[]
+  attachments   FileAttachment[]
+  upvotes       ComplaintUpvote[]
+  feedback      ComplaintFeedback?
+  workOrder     WorkOrder?
 
-  incidentId     String?
-  incident       Incident?  @relation(fields: [incidentId], references: [id], onDelete: SetNull)
+  incidentId String?
+  incident   Incident? @relation(fields: [incidentId], references: [id], onDelete: SetNull)
 
-  assetId        String?
-  asset          Asset?     @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  assetId String?
+  asset   Asset?  @relation(fields: [assetId], references: [id], onDelete: SetNull)
 
   @@index([status])
   @@index([category])
@@ -179,17 +185,32 @@ model ComplaintUpvote {
   @@index([userId])
 }
 
-model ComplaintAttachment {
-  id          String    @id @default(uuid())
-  complaintId String
-  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
-  fileUrl     String
-  fileName    String
-  fileSize    Int
-  mimeType    String
-  createdAt   DateTime  @default(now())
+model FileAttachment {
+  id       String @id @default(uuid())
+  fileUrl  String
+  fileName String
+  fileSize Int
+  mimeType String
+
+  uploaderId String?
+  uploader   User?   @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
+
+  complaintId String?
+  complaint   Complaint? @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
+  workOrderId String?
+  workOrder   WorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  assetId String?
+  asset   Asset?  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  category String? @default("GENERAL") // e.g., BEFORE_PHOTO, AFTER_PHOTO, INVOICE, DOCUMENT
+
+  createdAt DateTime @default(now())
 
   @@index([complaintId])
+  @@index([workOrderId])
+  @@index([assetId])
 }
 
 model Assignment {
@@ -232,7 +253,7 @@ model AIPrediction {
   predictedDepartment  String?
   confidence           Float
   modelVersion         String    @default("campusfix-v1")
-  predictionIndicators String?   // JSON string of keywords/indicators
+  predictionIndicators String? // JSON string of keywords/indicators
   status               String    @default("SUCCESS") // SUCCESS, FAILED, LOW_CONFIDENCE
   createdAt            DateTime  @default(now())
 
@@ -245,9 +266,9 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   message   String
-  type      String   // COMPLAINT_CREATED, COMPLAINT_ASSIGNED, STATUS_CHANGED, RESOLVED, REOPENED, AI_REVIEW
+  type      String // COMPLAINT_CREATED, COMPLAINT_ASSIGNED, STATUS_CHANGED, RESOLVED, REOPENED, AI_REVIEW
   read      Boolean  @default(false)
-  entityId  String?  // complaintId or assignmentId
+  entityId  String? // complaintId or assignmentId
   createdAt DateTime @default(now())
 
   @@index([userId])
@@ -258,15 +279,87 @@ model AuditLog {
   id         String   @id @default(uuid())
   actorId    String?
   actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
-  action     String   // LOGIN, COMPLAINT_CREATED, ASSIGNMENT_CREATED, STATUS_CHANGED, AI_REVIEWED, etc.
-  entityType String   // COMPLAINT, ASSIGNMENT, USER, DEPARTMENT
+  action     String // LOGIN, COMPLAINT_CREATED, ASSIGNMENT_CREATED, STATUS_CHANGED, AI_REVIEWED, etc.
+  entityType String // COMPLAINT, ASSIGNMENT, WORK_ORDER, USER, DEPARTMENT
   entityId   String?
-  metadata   String?  // JSON formatted details
+  metadata   String? // JSON formatted details
+  ipAddress  String? // Track network origin
+  userAgent  String? // Track browser/device
   timestamp  DateTime @default(now())
 
   @@index([actorId])
   @@index([action])
   @@index([timestamp])
+}
+
+enum WorkOrderStatus {
+  CREATED
+  ASSIGNED
+  SCHEDULED
+  ACKNOWLEDGED
+  IN_PROGRESS
+  WAITING_FOR_PARTS
+  WAITING_FOR_APPROVAL
+  RESOLVED
+  VERIFIED
+  CLOSED
+  CANCELLED
+}
+
+model WorkOrder {
+  id              String @id @default(uuid())
+  workOrderNumber String @unique
+
+  complaintId String    @unique
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+
+  technicianId String?
+  technician   User?   @relation("WorkOrderTechnician", fields: [technicianId], references: [id], onDelete: SetNull)
+
+  supervisorId String?
+  supervisor   User?   @relation("WorkOrderSupervisor", fields: [supervisorId], references: [id], onDelete: SetNull)
+
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  priority Priority        @default(MEDIUM)
+  status   WorkOrderStatus @default(CREATED)
+
+  scheduledDate DateTime?
+  startedDate   DateTime?
+  completedDate DateTime?
+
+  estimatedHours Float?
+  actualHours    Float?
+
+  notes           String?
+  resolutionNotes String?
+  checklist       String? // JSON structured checklist
+  laborInfo       String? // JSON structured labor tracking
+
+  studentConfirmed   Boolean @default(false)
+  supervisorApproved Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attachments FileAttachment[]
+  parts       WorkOrderPart[]
+
+  @@index([status])
+  @@index([technicianId])
+}
+
+model WorkOrderPart {
+  id           String        @id @default(uuid())
+  workOrderId  String
+  workOrder    WorkOrder     @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  inventoryId  String
+  inventory    InventoryItem @relation(fields: [inventoryId], references: [id], onDelete: Restrict)
+  quantityUsed Int
+  createdAt    DateTime      @default(now())
+
+  @@index([workOrderId])
 }
 
 model ComplaintComment {
@@ -291,7 +384,6 @@ model SLAConfig {
   updatedAt       DateTime @updatedAt
 }
 
-
 model ComplaintFeedback {
   id          String    @id @default(uuid())
   complaintId String    @unique
@@ -306,8 +398,6 @@ model ComplaintFeedback {
   @@index([rating])
 }
 
-
-
 enum IncidentSeverity {
   MINOR
   MAJOR
@@ -315,24 +405,22 @@ enum IncidentSeverity {
 }
 
 model Incident {
-  id          String   @id @default(uuid())
+  id          String           @id @default(uuid())
   title       String
   description String
   category    Category
   severity    IncidentSeverity @default(MAJOR)
-  status      Status   @default(IN_PROGRESS)
+  status      Status           @default(IN_PROGRESS)
   location    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
   resolvedAt  DateTime?
 
-  complaints  Complaint[]
-  
+  complaints Complaint[]
+
   @@index([status])
   @@index([category])
 }
-
-
 
 enum AssetStatus {
   ACTIVE
@@ -355,29 +443,30 @@ enum MaintenanceStatus {
 }
 
 model Asset {
-  id               String       @id @default(uuid())
-  assetCode        String       @unique
-  qrCode           String?      @unique
-  name             String
-  type             String
-  manufacturer     String?
-  model            String?
-  serialNumber     String?
-  location         String
-  building         String?
-  floor            String?
-  room             String?
-  departmentId     String?
-  department       Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  purchaseDate     DateTime?
-  warrantyExpires  DateTime?
-  status           AssetStatus  @default(ACTIVE)
-  cost             Float?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  id              String      @id @default(uuid())
+  assetCode       String      @unique
+  qrCode          String?     @unique
+  name            String
+  type            String
+  manufacturer    String?
+  model           String?
+  serialNumber    String?
+  location        String
+  building        String?
+  floor           String?
+  room            String?
+  departmentId    String?
+  department      Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  purchaseDate    DateTime?
+  warrantyExpires DateTime?
+  status          AssetStatus @default(ACTIVE)
+  cost            Float?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
-  maintenances     AssetMaintenance[]
-  complaints       Complaint[]
+  maintenances   AssetMaintenance[]
+  complaints     Complaint[]
+  FileAttachment FileAttachment[]
 
   @@index([assetCode])
   @@index([status])
@@ -386,22 +475,22 @@ model Asset {
 }
 
 model AssetMaintenance {
-  id              String            @id @default(uuid())
-  assetId         String
-  asset           Asset             @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  title           String
-  description     String?
-  type            MaintenanceType
-  status          MaintenanceStatus @default(SCHEDULED)
-  scheduledDate   DateTime?
-  completedDate   DateTime?
-  technicianId    String?
-  technician      User?             @relation(fields: [technicianId], references: [id], onDelete: SetNull)
-  cost            Float?            @default(0)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id            String            @id @default(uuid())
+  assetId       String
+  asset         Asset             @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  type          MaintenanceType
+  status        MaintenanceStatus @default(SCHEDULED)
+  scheduledDate DateTime?
+  completedDate DateTime?
+  technicianId  String?
+  technician    User?             @relation(fields: [technicianId], references: [id], onDelete: SetNull)
+  cost          Float?            @default(0)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
-  partsUsed       MaintenancePart[]
+  partsUsed MaintenancePart[]
 
   @@index([assetId])
   @@index([technicianId])
@@ -410,19 +499,20 @@ model AssetMaintenance {
 }
 
 model InventoryItem {
-  id              String   @id @default(uuid())
-  sku             String   @unique
-  name            String
-  description     String?
-  quantity        Int      @default(0)
-  minStockLevel   Int      @default(5)
-  cost            Float?
-  supplier        String?
-  location        String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            String   @id @default(uuid())
+  sku           String   @unique
+  name          String
+  description   String?
+  quantity      Int      @default(0)
+  minStockLevel Int      @default(5)
+  cost          Float?
+  supplier      String?
+  location      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  usedIn          MaintenancePart[]
+  usedIn        MaintenancePart[]
+  WorkOrderPart WorkOrderPart[]
 
   @@index([sku])
 }

@@ -19,6 +19,7 @@ import incidentRoutes from './routes/incidentRoutes';
 import assetRoutes from './routes/assetRoutes';
 import inventoryRoutes from './routes/inventoryRoutes';
 import chatRoutes from './routes/chatRoutes';
+import workOrderRoutes from './routes/workOrderRoutes';
 
 const app = express();
 
@@ -86,6 +87,7 @@ app.use(['/api/incidents', '/incidents'], incidentRoutes);
 app.use(['/api/assets', '/assets'], assetRoutes);
 app.use(['/api/inventory', '/inventory'], inventoryRoutes);
 app.use(['/api/chat', '/chat'], chatRoutes);
+app.use(['/api/work-orders', '/work-orders'], workOrderRoutes);
 
 // 404 Route Fallback
 app.use('*', (req, res) => {

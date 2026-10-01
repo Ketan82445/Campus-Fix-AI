@@ -561,7 +561,7 @@ export class ComplaintService {
     const attachment = complaint.attachments.find((a) => a.id === attachmentId);
     if (!attachment) throw new AppError('Attachment not found', 404, 'NOT_FOUND');
 
-    await prisma.complaintAttachment.delete({ where: { id: attachmentId } });
+    await prisma.fileAttachment.delete({ where: { id: attachmentId } });
     return { success: true, message: 'Attachment deleted successfully' };
   }
 
