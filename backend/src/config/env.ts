@@ -9,6 +9,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().default(
     'postgresql://postgres.xtkieelrpqdpixjxnvxv:CampusFix2026%21@aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require'
   ),
+  DIRECT_URL: z.string().optional(),
   JWT_SECRET: z.string().default('campusfix_super_secret_jwt_key_2026'),
   JWT_REFRESH_SECRET: z.string().default('campusfix_super_secret_refresh_key_2026'),
   JWT_EXPIRES_IN: z.string().default('1d'),
