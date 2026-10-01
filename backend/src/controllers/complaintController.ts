@@ -11,6 +11,7 @@ import {
   checkSimilarSchema,
   markDuplicateSchema
 } from '../validators/complaintValidator';
+import { StorageService } from '../services/storageService';
 
 export class ComplaintController {
   public static async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
@@ -120,16 +121,22 @@ export class ComplaintController {
           error: { code: 'FILE_TOO_LARGE', message: 'File size exceeds maximum allowed limit of 5MB' }
         });
       }
+      // Stream base64 to Supabase Storage Bucket and get public URL
+      const publicUrl = await StorageService.uploadBase64(
+        validated.fileData,
+        validated.fileName,
+        validated.mimeType
+      );
 
       return sendSuccess(
         res,
         {
           fileName: validated.fileName,
-          fileUrl: validated.fileData,
+          fileUrl: publicUrl,
           fileSize: approxBytes,
           mimeType: validated.mimeType
         },
-        'Attachment validated successfully'
+        'Attachment uploaded successfully'
       );
     } catch (error) {
       next(error);

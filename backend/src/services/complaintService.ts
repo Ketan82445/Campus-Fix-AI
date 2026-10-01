@@ -5,6 +5,7 @@ import { AIClientService } from './aiClientService';
 import { RoutingService } from './routingService';
 import { AssignmentService } from './assignmentService';
 import { NotificationService } from './notificationService';
+import { StorageService } from './storageService';
 import { AuditService } from './auditService';
 import { ComplaintSimilarityService, CheckSimilarInput } from './complaintSimilarityService';
 import { SLAService } from './slaService';
@@ -573,6 +574,10 @@ export class ComplaintService {
     if (!attachment) throw new AppError('Attachment not found', 404, 'NOT_FOUND');
 
     await prisma.fileAttachment.delete({ where: { id: attachmentId } });
+    
+    // Attempt to delete from physical storage
+    await StorageService.deleteFile(attachment.fileUrl).catch(console.error);
+
     return { success: true, message: 'Attachment deleted successfully' };
   }
 

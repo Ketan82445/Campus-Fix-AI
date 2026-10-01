@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { WorkOrderService } from '../services/workOrderService';
 import { sendSuccess } from '../utils/response';
+import { StorageService } from '../services/storageService';
 import { AuthenticatedRequest, AppError } from '../types';
 
 export class WorkOrderController {
@@ -105,7 +106,28 @@ export class WorkOrderController {
   public static async addAttachment(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) throw new AppError('Unauthorized', 401);
-      const attachment = await WorkOrderService.addAttachment(req.params.id, req.body, req.user);
+      
+      const { fileName, fileData, mimeType, category } = req.body;
+      if (!fileName || !fileData || !mimeType) {
+        throw new AppError('Missing required fields: fileName, fileData, mimeType', 400);
+      }
+
+      const approxBytes = Math.round((fileData.length * 3) / 4);
+      if (approxBytes > 5 * 1024 * 1024) {
+        throw new AppError('File size exceeds maximum allowed limit of 5MB', 400);
+      }
+
+      // Upload base64 to Supabase
+      const publicUrl = await StorageService.uploadBase64(fileData, fileName, mimeType);
+
+      const attachment = await WorkOrderService.addAttachment(req.params.id, {
+        fileName,
+        fileUrl: publicUrl,
+        fileSize: approxBytes,
+        mimeType,
+        category
+      }, req.user);
+      
       return sendSuccess(res, attachment, 'Attachment added successfully', 201);
     } catch (error) {
       next(error);

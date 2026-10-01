@@ -16,7 +16,9 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
   AI_SERVICE_URL: z.string().default('http://localhost:8000'),
   FRONTEND_URL: z.string().default('https://campus-fix-ai-six.vercel.app'),
-  GEMINI_API_KEY: z.string().optional()
+  GEMINI_API_KEY: z.string().optional(),
+  SUPABASE_URL: z.string().optional(),
+  SUPABASE_SERVICE_KEY: z.string().optional()
 });
 
 const _env = envSchema.safeParse(process.env);
