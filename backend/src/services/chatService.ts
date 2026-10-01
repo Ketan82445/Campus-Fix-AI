@@ -3,13 +3,13 @@ import { env } from '../config/env';
 import { prisma } from '../config/prisma';
 import { AppError, UserPayload } from '../types';
 
-const genAI = env.GEMINI_API_KEY ? new GoogleGenerativeAI(env.GEMINI_API_KEY) : null;
-
 export class ChatService {
   public static async processChat(user: UserPayload, messages: any[]) {
-    if (!genAI) {
-      throw new AppError('Gemini API Key is missing. Please configure GEMINI_API_KEY in the .env file.', 500, 'SERVER_ERROR');
+    const geminiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!geminiKey) {
+      throw new AppError('Gemini API Key is missing from the server environment variables. Please add it to Vercel.', 500, 'SERVER_ERROR');
     }
+    const genAI = new GoogleGenerativeAI(geminiKey);
 
     const systemPrompt = `You are the CampusFix AI Assistant. You are a helpful, professional, and concise campus operations assistant.
 You are currently talking to a user named ${user.name} who has the role of ${user.role}.
