@@ -70,13 +70,35 @@ export const AIChatbotDrawer: React.FC<{ isOpen: boolean; onClose: () => void }>
           timestamp: new Date()
         }
       ]);
-    } catch (error) {
+    } catch (error: any) {
+      let errorMessage = "I'm sorry, I encountered an unknown error connecting to the AI server.";
+      if (error.response) {
+        const status = error.response.status;
+        const dataMessage = error.response.data?.error?.message || error.response.data?.message;
+        
+        if (status === 401 || status === 403) {
+          errorMessage = "I'm sorry, but you do not have permission to access the AI assistant.";
+        } else if (status === 404) {
+          errorMessage = "I'm sorry, the requested AI model is currently unavailable or deprecated.";
+        } else if (status === 429) {
+          errorMessage = "I'm sorry, you have reached the rate limit. Please wait a moment and try again.";
+        } else if (status === 503 || (dataMessage && dataMessage.includes('503'))) {
+          errorMessage = "The AI service is currently experiencing high demand and is temporarily unavailable. Please try again in a few minutes.";
+        } else if (dataMessage && dataMessage.includes('API Key is missing')) {
+          errorMessage = "The AI is currently disabled because the GEMINI_API_KEY is missing from the server configuration.";
+        } else if (status === 500) {
+          errorMessage = "I'm sorry, the AI service encountered an internal error. Please try again later.";
+        }
+      } else if (error.request) {
+        errorMessage = "I could not connect to the server. Please check your network connection.";
+      }
+
       setMessages(prev => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
           sender: 'ai',
-          text: "I'm sorry, I cannot reach the AI server right now. Make sure the GEMINI_API_KEY is configured in the backend `.env` file.",
+          text: errorMessage,
           timestamp: new Date()
         }
       ]);
