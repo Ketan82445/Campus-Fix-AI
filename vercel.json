@@ -11,5 +11,10 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "functions": {
+    "api/**/*.ts": {
+      "includeFiles": "backend/node_modules/.prisma/client/**/*"
+    }
+  }
 }

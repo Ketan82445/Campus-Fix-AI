@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "npm install && npx prisma generate --schema=backend/prisma/schema.prisma && cd frontend && npm install && npm run build",
-    "vercel-build": "npm install && npx prisma generate --schema=backend/prisma/schema.prisma && cd frontend && npm install && npm run build"
+    "build": "cd backend && npm install && npx prisma generate && cd ../frontend && npm install && npm run build",
+    "vercel-build": "cd backend && npm install && npx prisma generate && cd ../frontend && npm install && npm run build"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
