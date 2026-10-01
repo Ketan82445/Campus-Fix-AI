@@ -47,7 +47,7 @@ You have access to tools to look up real-time database information. ALWAYS use y
     };
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-3.8-flash',
       systemInstruction: systemPrompt,
       tools: [{ functionDeclarations: [getMyComplaintsTool, getComplaintStatusTool, checkInventoryTool] }],
     });
