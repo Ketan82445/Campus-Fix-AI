@@ -364,9 +364,11 @@ export interface WorkOrder {
 }
 
 export interface WorkOrderMetrics {
-  totalActive: number;
-  completedToday: number;
-  avgCompletionTimeHours: number;
-  pendingParts: number;
+  total: number;
+  active: number;
+  inProgress: number;
+  waitingParts: number;
+  resolved: number;
+  closed: number;
 }
 

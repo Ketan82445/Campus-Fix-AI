@@ -15,7 +15,7 @@ export const workOrderApi = {
   },
 
   // Get all work orders
-  getAll: async (params?: any): Promise<ApiResponse<PaginatedResponse<WorkOrder>>> => {
+  getAll: async (params?: any): Promise<ApiResponse<{ workOrders: WorkOrder[]; pagination: any }>> => {
     return api.get('/work-orders', { params });
   },
 
