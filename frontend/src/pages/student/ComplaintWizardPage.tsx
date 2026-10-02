@@ -185,6 +185,13 @@ export const ComplaintWizardPage: React.FC = () => {
       recognition.onerror = (event: any) => {
         console.error('Speech recognition error', event.error);
         setIsRecording(false);
+        if (event.error === 'not-allowed') {
+          setError('Microphone access was denied. Please check your browser permissions.');
+        } else if (event.error === 'no-speech') {
+          setError('No speech was detected. Please try again.');
+        } else {
+          setError(`Microphone error: ${event.error}`);
+        }
       };
       
       recognition.onend = () => setIsRecording(false);
