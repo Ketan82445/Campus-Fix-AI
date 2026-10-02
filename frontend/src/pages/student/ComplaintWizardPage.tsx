@@ -189,6 +189,8 @@ export const ComplaintWizardPage: React.FC = () => {
           setError('Microphone access was denied. Please check your browser permissions.');
         } else if (event.error === 'no-speech') {
           setError('No speech was detected. Please try again.');
+        } else if (event.error === 'network') {
+          setError('Network error: Browsers like Brave or strict firewalls block Google Voice Recognition. Try using Chrome or Edge.');
         } else {
           setError(`Microphone error: ${event.error}`);
         }
