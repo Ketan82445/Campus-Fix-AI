@@ -20,8 +20,10 @@ import assetRoutes from './routes/assetRoutes';
 import inventoryRoutes from './routes/inventoryRoutes';
 import chatRoutes from './routes/chatRoutes';
 import workOrderRoutes from './routes/workOrderRoutes';
+import compression from 'compression';
 
 const app = express();
+app.use(compression());
 
 // Trust proxy for Render/Vercel deployments so rate limiter can read client IP properly
 app.set('trust proxy', 1);
