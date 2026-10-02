@@ -175,11 +175,15 @@ export const ComplaintWizardPage: React.FC = () => {
       recognition.onstart = () => setIsRecording(true);
       
       recognition.onresult = (event: any) => {
-        const transcript = Array.from(event.results)
-          .map((result: any) => result[0])
-          .map((result: any) => result.transcript)
-          .join('');
-        setDescription(prev => prev + (prev.endsWith(' ') || prev.length === 0 ? '' : ' ') + transcript);
+        let newTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            newTranscript += event.results[i][0].transcript;
+          }
+        }
+        if (newTranscript) {
+          setDescription(prev => prev + (prev.endsWith(' ') || prev.length === 0 ? '' : ' ') + newTranscript.trim());
+        }
       };
       
       recognition.onerror = (event: any) => {
