@@ -34,6 +34,27 @@ export const AdminInventoryPage: React.FC = () => {
     }
   };
 
+  const handleAddPart = async () => {
+    const sku = window.prompt("Enter SKU (e.g. CABLE-01):");
+    if (!sku) return;
+    const name = window.prompt("Enter Part Name:");
+    if (!name) return;
+    const qty = window.prompt("Enter Initial Quantity:");
+    
+    try {
+      await api.post('/inventory', {
+        sku,
+        name,
+        quantity: Number(qty) || 0,
+        minStockLevel: 5
+      });
+      fetchInventory();
+    } catch (error) {
+      console.error('Failed to create part', error);
+      alert('Failed to create part');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -41,7 +62,7 @@ export const AdminInventoryPage: React.FC = () => {
           <h1 className="text-2xl font-bold text-slate-900">Spare Parts Inventory</h1>
           <p className="text-sm text-slate-500 mt-1">Manage maintenance inventory and monitor stock levels</p>
         </div>
-        <button className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 flex items-center gap-2">
+        <button onClick={handleAddPart} className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 flex items-center gap-2">
           <Plus className="w-4 h-4" />
           Add New Part
         </button>

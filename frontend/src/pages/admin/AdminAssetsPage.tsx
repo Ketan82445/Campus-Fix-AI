@@ -31,6 +31,31 @@ export const AdminAssetsPage: React.FC = () => {
     }
   };
 
+  const handleAddAsset = async () => {
+    const assetCode = window.prompt("Enter Asset Code (e.g. AC-101):");
+    if (!assetCode) return;
+    const name = window.prompt("Enter Asset Name (e.g. Main Hall AC):");
+    if (!name) return;
+    const type = window.prompt("Enter Asset Type (e.g. HVAC, ELECTRICAL, PLUMBING):", "HVAC");
+    if (!type) return;
+    const location = window.prompt("Enter Location (e.g. Main Hall):");
+    
+    try {
+      await api.post('/assets', {
+        assetCode,
+        qrCode: assetCode,
+        name,
+        type,
+        location,
+        status: 'ACTIVE'
+      });
+      fetchAssets();
+    } catch (error) {
+      console.error('Failed to create asset', error);
+      alert('Failed to create asset');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -38,7 +63,7 @@ export const AdminAssetsPage: React.FC = () => {
           <h1 className="text-2xl font-bold text-slate-900">Asset Management</h1>
           <p className="text-sm text-slate-500 mt-1">Track campus infrastructure and maintenance</p>
         </div>
-        <button className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 flex items-center gap-2">
+        <button onClick={handleAddAsset} className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 flex items-center gap-2">
           <Plus className="w-4 h-4" />
           Add Asset
         </button>
