@@ -6,6 +6,9 @@ export const AdminAssetsPage: React.FC = () => {
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newAsset, setNewAsset] = useState({ assetCode: '', name: '', type: 'HVAC', location: '' });
+
   useEffect(() => {
     fetchAssets();
   }, []);
@@ -31,24 +34,18 @@ export const AdminAssetsPage: React.FC = () => {
     }
   };
 
-  const handleAddAsset = async () => {
-    const assetCode = window.prompt("Enter Asset Code (e.g. AC-101):");
-    if (!assetCode) return;
-    const name = window.prompt("Enter Asset Name (e.g. Main Hall AC):");
-    if (!name) return;
-    const type = window.prompt("Enter Asset Type (e.g. HVAC, ELECTRICAL, PLUMBING):", "HVAC");
-    if (!type) return;
-    const location = window.prompt("Enter Location (e.g. Main Hall):");
+  const handleAddAsset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAsset.assetCode || !newAsset.name) return;
     
     try {
       await api.post('/assets', {
-        assetCode,
-        qrCode: assetCode,
-        name,
-        type,
-        location,
+        ...newAsset,
+        qrCode: newAsset.assetCode,
         status: 'ACTIVE'
       });
+      setShowAddForm(false);
+      setNewAsset({ assetCode: '', name: '', type: 'HVAC', location: '' });
       fetchAssets();
     } catch (error) {
       console.error('Failed to create asset', error);
@@ -63,11 +60,41 @@ export const AdminAssetsPage: React.FC = () => {
           <h1 className="text-2xl font-bold text-slate-900">Asset Management</h1>
           <p className="text-sm text-slate-500 mt-1">Track campus infrastructure and maintenance</p>
         </div>
-        <button onClick={handleAddAsset} className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 flex items-center gap-2">
+        <button onClick={() => setShowAddForm(!showAddForm)} className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 flex items-center gap-2">
           <Plus className="w-4 h-4" />
-          Add Asset
+          {showAddForm ? 'Cancel' : 'Add Asset'}
         </button>
       </div>
+
+      {showAddForm && (
+        <form onSubmit={handleAddAsset} className="bg-white p-4 rounded-xl shadow-sm border border-brand-200 grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Asset ID / Code</label>
+            <input required type="text" value={newAsset.assetCode} onChange={e => setNewAsset({...newAsset, assetCode: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="e.g. AC-101" />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-xs font-medium text-slate-700 mb-1">Asset Name</label>
+            <input required type="text" value={newAsset.name} onChange={e => setNewAsset({...newAsset, name: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="e.g. Main Hall AC" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Type</label>
+            <select value={newAsset.type} onChange={e => setNewAsset({...newAsset, type: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm bg-white">
+              <option value="HVAC">HVAC</option>
+              <option value="ELECTRICAL">Electrical</option>
+              <option value="PLUMBING">Plumbing</option>
+              <option value="FURNITURE">Furniture</option>
+              <option value="IT_EQUIPMENT">IT Equipment</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Location</label>
+            <div className="flex gap-2">
+              <input required type="text" value={newAsset.location} onChange={e => setNewAsset({...newAsset, location: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="e.g. Main Hall" />
+              <button type="submit" className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium">Save</button>
+            </div>
+          </div>
+        </form>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">

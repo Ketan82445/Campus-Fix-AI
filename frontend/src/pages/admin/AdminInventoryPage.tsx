@@ -6,6 +6,9 @@ export const AdminInventoryPage: React.FC = () => {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newPart, setNewPart] = useState({ sku: '', name: '', quantity: 0 });
+
   useEffect(() => {
     fetchInventory();
   }, []);
@@ -34,20 +37,18 @@ export const AdminInventoryPage: React.FC = () => {
     }
   };
 
-  const handleAddPart = async () => {
-    const sku = window.prompt("Enter SKU (e.g. CABLE-01):");
-    if (!sku) return;
-    const name = window.prompt("Enter Part Name:");
-    if (!name) return;
-    const qty = window.prompt("Enter Initial Quantity:");
+  const handleAddPart = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPart.sku || !newPart.name) return;
     
     try {
       await api.post('/inventory', {
-        sku,
-        name,
-        quantity: Number(qty) || 0,
+        ...newPart,
+        quantity: Number(newPart.quantity),
         minStockLevel: 5
       });
+      setShowAddForm(false);
+      setNewPart({ sku: '', name: '', quantity: 0 });
       fetchInventory();
     } catch (error) {
       console.error('Failed to create part', error);
@@ -62,11 +63,31 @@ export const AdminInventoryPage: React.FC = () => {
           <h1 className="text-2xl font-bold text-slate-900">Spare Parts Inventory</h1>
           <p className="text-sm text-slate-500 mt-1">Manage maintenance inventory and monitor stock levels</p>
         </div>
-        <button onClick={handleAddPart} className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 flex items-center gap-2">
+        <button onClick={() => setShowAddForm(!showAddForm)} className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 flex items-center gap-2">
           <Plus className="w-4 h-4" />
-          Add New Part
+          {showAddForm ? 'Cancel' : 'Add New Part'}
         </button>
       </div>
+
+      {showAddForm && (
+        <form onSubmit={handleAddPart} className="bg-white p-4 rounded-xl shadow-sm border border-brand-200 flex flex-wrap gap-4 items-end">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-xs font-medium text-slate-700 mb-1">SKU</label>
+            <input required type="text" value={newPart.sku} onChange={e => setNewPart({...newPart, sku: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="e.g. CABLE-01" />
+          </div>
+          <div className="flex-[2] min-w-[250px]">
+            <label className="block text-xs font-medium text-slate-700 mb-1">Part Name</label>
+            <input required type="text" value={newPart.name} onChange={e => setNewPart({...newPart, name: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="e.g. HDMI Cable 2m" />
+          </div>
+          <div className="w-32">
+            <label className="block text-xs font-medium text-slate-700 mb-1">Init Qty</label>
+            <input required type="number" min="0" value={newPart.quantity} onChange={e => setNewPart({...newPart, quantity: parseInt(e.target.value) || 0})} className="w-full px-3 py-2 border rounded-lg text-sm" />
+          </div>
+          <button type="submit" className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium h-[38px]">
+            Save Part
+          </button>
+        </form>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
