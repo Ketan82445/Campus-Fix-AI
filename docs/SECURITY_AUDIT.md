@@ -1,51 +1,52 @@
-# CampusFix AI — Security Audit & Hardening Report
+# CampusFix AI Security Audit Report
 
-Date: September 28, 2026
-Auditor: Cybersecurity & Backend Lead
+## 1. Executive Summary
+A comprehensive security audit of the CampusFix AI application was conducted. The audit covered authentication, authorization, data validation, file uploads, third-party dependencies, and general architecture. Several severe vulnerabilities were identified and immediately remediated. The application is now heavily fortified against common web vulnerabilities (OWASP Top 10).
 
----
+## 2. Vulnerability Tracking
 
-## 🛡️ Implemented Security Controls
+### 2.1. Privilege Escalation in Registration
+* **Status**: Fixed
+* **Description**: The `/api/auth/register` endpoint previously accepted a `role` field in the request payload. A malicious user could pass `{"role": "ADMIN"}` to gain administrative privileges upon registration.
+* **Remediation**: Hardened `authValidator.ts` and `authService.ts` to strictly enforce `Role.STUDENT` for all public registrations, completely dropping any role provided by the client.
 
-### 1. Password Hashing & Secret Management
-- **Algorithm**: `bcryptjs` with 10 salt rounds.
-- Plaintext passwords are **NEVER** stored or printed in logs.
-- Database seeds and API registrations hash passwords prior to persistence.
-- JWT Secrets are injected strictly via `.env` variables (`JWT_SECRET`, `JWT_REFRESH_SECRET`).
+### 2.2. Cross-Tenant Insecure Direct Object Reference (IDOR)
+* **Status**: Fixed
+* **Description**: `ComplaintService.updateStatus` allowed users to close or modify tickets belonging to other users if they could guess the ID.
+* **Remediation**: Implemented strict ownership checks in `complaintService.ts`. Students can now only access, close, or reopen their own complaints.
 
-### 2. Authentication & JWT Tokens
-- Bearer JWT token strategy (`Authorization: Bearer <token>`).
-- Token expiration enforced (`1d`).
-- `GET /api/auth/me` verifies signature on every session initialization.
+### 2.3. Unrestricted File Uploads (RCE & Path Traversal)
+* **Status**: Fixed
+* **Description**: File uploads (attachments/evidence) were stored directly in PostgreSQL as bloated base64 strings without strict validation, risking database exhaustion and potential malicious file execution.
+* **Remediation**: Migrated file storage to a dedicated Supabase Storage Bucket (`campusfix-assets`). Implemented a rigorous `StorageService` enforcing a strict MIME type whitelist, extension validation, path traversal sanitization, and a 5MB size limit per file.
 
-### 3. Role-Based Access Control (RBAC)
-- Middleware enforced on Express routes: `requireRole(Role.ADMIN)`, `requireRole(Role.TECHNICIAN)`, `requireRole(Role.STUDENT)`.
-- **Student Scoping**: Students can only view their own created complaints (`createdById == req.user.id`). Direct ID queries (IDOR attempts) on other students' complaints return `403 Forbidden`.
-- **Technician Scoping**: Technicians can only update status on complaints assigned to them or within their designated department.
-- **Admin Scoping**: Admins hold full system visibility, AI review override permissions, and user management capabilities.
+### 2.4. Cross-Site Scripting (XSS)
+* **Status**: Fixed
+* **Description**: User inputs (complaint titles, descriptions) were stored and rendered without sanitization, exposing the platform to Stored XSS attacks.
+* **Remediation**: Implemented `Sanitizer.sanitizeText()` to strip malicious HTML tags and scripts. Applied this sanitizer to all complaint and work order creation endpoints.
 
-### 4. Input Validation & Mass Assignment Defense
-- **Validation Engine**: Zod schemas (`createComplaintSchema`, `updateStatusSchema`, `reviewAIPredictionSchema`, `registerSchema`).
-- Requests containing illegal fields (e.g. attempting to pass `"role": "ADMIN"` on student registration) are stripped or rejected before database execution.
+### 2.5. AI Assistant Tenant Isolation
+* **Status**: Fixed
+* **Description**: The AI Chatbot tools (`chatService.ts`) lacked tenant isolation, allowing students to query the status of other students' tickets or inspect campus inventory.
+* **Remediation**: Added context-aware, role-based isolation to all AI function calls. The AI now only fetches data belonging to the authenticated user unless the user has an ADMIN role.
 
-### 5. HTTP Security Headers & Rate Limiting
-- **Helmet**: Configured on Express app to inject `X-Frame-Options`, `X-Content-Type-Options: nosniff`, `X-XSS-Protection`, and `Content-Security-Policy`.
-- **Rate Limiting**: `express-rate-limit` configured to limit requests to 300 per 15-minute window per IP, returning `429 Too Many Requests` when exceeded.
+### 2.6. Dependency Vulnerabilities
+* **Status**: Acknowledged (Frontend) / Clean (Backend)
+* **Description**: `npm audit` returned 0 vulnerabilities in the Node.js backend. The React/Vite frontend flagged 4 vulnerabilities related to `esbuild`, `vite`, and `react-router`.
+* **Remediation**: Backend is secure. Upgrading the frontend dependencies introduces breaking changes to the React architecture (React Router 6 to 7, Vite 6 to 8). This upgrade is deferred to a dedicated frontend migration phase to avoid breaking the working UI.
 
-### 6. AI Microservice Resilience & Error Masking
-- System errors and database stack traces are caught by global Express error middleware (`errorHandler.ts`).
-- Users receive sanitized error messages (`{ success: false, error: { code, message } }`).
-- If the Python AI service is down or times out, the system automatically catches the failure and flags the ticket for manual admin review (`AI_REVIEW_REQUIRED`) without crashing or exposing raw socket errors.
+### 2.7. Cross-Site Request Forgery (CSRF)
+* **Status**: Not Applicable (Secure by Design)
+* **Description**: Audit confirmed that CSRF is not a threat.
+* **Reasoning**: The frontend explicitly stores the JWT in `localStorage` and manually attaches it as an `Authorization: Bearer` header. The application does not use automated authentication cookies, rendering CSRF attacks impossible.
 
----
+### 2.8. Mass Data Exfiltration / Bulk APIs
+* **Status**: Secure
+* **Description**: Checked for unprotected bulk export APIs.
+* **Reasoning**: No bulk CSV export or mass download APIs exist. Standard endpoints use pagination to prevent scraping and database exhaustion.
 
-## 🔒 Security Audit Test Results
-
-| Security Test Case | Target Endpoint | Input / Action | Result | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| **Authentication Bypass** | `GET /api/complaints` | No token header | `401 Unauthorized` | **PASS** |
-| **Role Escalation (RBAC)** | `GET /api/analytics/overview` | Student JWT token | `403 Forbidden` | **PASS** |
-| **IDOR Protection** | `GET /api/complaints/:id` | Student querying another student's ticket | `403 Forbidden` | **PASS** |
-| **Mass Assignment** | `POST /api/auth/register` | Passing `role: "ADMIN"` | Role defaults to `STUDENT` | **PASS** |
-| **XSS / Script Injection** | `POST /api/complaints` | Title: `<script>alert(1)</script>` | HTML entity escaped / sanitized | **PASS** |
-| **SQL Injection** | `GET /api/complaints?search=' OR 1=1--` | Parameterized Prisma query | Paramaterized safely by Prisma | **PASS** |
+## 3. Server Hardening
+* **Helmet**: Installed and configured to set secure HTTP headers.
+* **CORS**: Restricted to a strict origin whitelist (no `*`).
+* **Rate Limiting**: Implemented a dedicated authentication rate limiter (max 20 requests per 15 minutes) to prevent brute-force attacks.
+* **Error Masking**: Database errors (Prisma `P2002`, `P2025`) are caught and obfuscated to prevent information leakage about the internal database schema.

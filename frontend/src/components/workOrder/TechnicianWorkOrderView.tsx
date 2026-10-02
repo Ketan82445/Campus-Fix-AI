@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { WorkOrder } from '../../types';
 import { workOrderApi } from '../../services/workOrderApi';
-import { Wrench, CheckCircle, Upload, Clock, Plus } from 'lucide-react';
+import { Wrench, CheckCircle, Upload, Clock, Plus, Play } from 'lucide-react';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 
 interface Props {
@@ -60,6 +60,25 @@ export const TechnicianWorkOrderView: React.FC<Props> = ({ workOrder, onUpdate }
     }
   };
 
+  const updateWOStatus = async (status: string, notes?: string) => {
+    try {
+      setIsUpdating(true);
+      await workOrderApi.updateStatus(workOrder.id, status, notes);
+      onUpdate();
+    } catch (e) {
+      alert('Failed to update status');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handlePartsRequest = () => {
+    const partsNeeded = prompt('What parts do you need? (e.g., "1x HDMI Cable")');
+    if (partsNeeded) {
+      updateWOStatus('WAITING_FOR_PARTS', `Requested: ${partsNeeded}`);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-6">
       <div className="bg-slate-900 p-4 text-white flex justify-between items-center">
@@ -72,12 +91,54 @@ export const TechnicianWorkOrderView: React.FC<Props> = ({ workOrder, onUpdate }
         </span>
       </div>
 
+      {/* One-Tap Workflow Command Center */}
+      <div className="bg-slate-50 border-b border-slate-200 p-4 flex flex-wrap gap-3">
+        {workOrder.status === 'ASSIGNED' || workOrder.status === 'WAITING_FOR_PARTS' ? (
+          <button onClick={() => updateWOStatus('IN_PROGRESS')} disabled={isUpdating} className="flex-1 min-w-[120px] bg-brand-600 hover:bg-brand-500 text-white font-bold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2 transition disabled:opacity-50">
+            <Play className="w-5 h-5" /> Start Work
+          </button>
+        ) : workOrder.status === 'IN_PROGRESS' ? (
+          <>
+            <button onClick={() => updateWOStatus('RESOLVED')} disabled={isUpdating} className="flex-1 min-w-[120px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2 transition disabled:opacity-50">
+              <CheckCircle className="w-5 h-5" /> Mark Resolved
+            </button>
+            <button onClick={handlePartsRequest} disabled={isUpdating} className="flex-1 min-w-[120px] bg-amber-500 hover:bg-amber-400 text-white font-bold py-3 px-4 rounded-xl shadow-sm flex items-center justify-center gap-2 transition disabled:opacity-50">
+              <Clock className="w-5 h-5" /> Need Parts
+            </button>
+          </>
+        ) : (
+          <div className="w-full text-center py-2 text-sm font-bold text-slate-500 bg-slate-100 rounded-lg">
+            Work Order is {workOrder.status}
+          </div>
+        )}
+      </div>
+
       <div className="p-5 space-y-6">
         {/* Instructions */}
         <div>
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Instructions</h3>
-          <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">
-            {workOrder.description}
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Instructions</h3>
+            <button 
+              onClick={async () => {
+                const btn = document.getElementById('ai-btn');
+                if (btn) btn.innerText = 'Analyzing...';
+                try {
+                  const res = await workOrderApi.getTroubleshooting(workOrder.id);
+                  if (res.success && res.data) {
+                    alert('AI Troubleshooting Steps:\n\n' + res.data.steps.map((s: string, i: number) => `${i+1}. ${s}`).join('\n'));
+                  }
+                } finally {
+                  if (btn) btn.innerText = 'Ask AI to Troubleshoot';
+                }
+              }}
+              id="ai-btn"
+              className="text-xs text-indigo-600 hover:text-indigo-800 font-bold bg-indigo-50 px-2 py-1 rounded"
+            >
+              Ask AI to Troubleshoot
+            </button>
+          </div>
+          <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100 whitespace-pre-wrap">
+            {workOrder.notes || 'No specific instructions provided.'}
           </p>
         </div>
 

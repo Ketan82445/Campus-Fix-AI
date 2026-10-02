@@ -8,10 +8,11 @@ import { LoadingSpinner } from './components/common/LoadingSpinner';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { StudentDashboard } from './pages/student/StudentDashboard';
-import { CreateComplaintPage } from './pages/student/CreateComplaintPage';
+import { ComplaintWizardPage } from './pages/student/ComplaintWizardPage';
 import { StudentComplaintDetails } from './pages/student/StudentComplaintDetails';
 import { TechnicianDashboard } from './pages/technician/TechnicianDashboard';
 import { TechnicianComplaintDetails } from './pages/technician/TechnicianComplaintDetails';
+import { InventoryPage } from './pages/technician/InventoryPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminAIReviewPage } from './pages/admin/AdminAIReviewPage';
 import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
@@ -96,7 +97,7 @@ export const App: React.FC = () => {
             path="/student/complaints/new"
             element={
               <ProtectedRoute allowedRoles={['STUDENT', 'ADMIN']}>
-                <CreateComplaintPage />
+                <ComplaintWizardPage />
               </ProtectedRoute>
             }
           />
@@ -131,6 +132,14 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['TECHNICIAN']}>
                 <TechnicianDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/technician/inventory"
+            element={
+              <ProtectedRoute allowedRoles={['TECHNICIAN', 'ADMIN']}>
+                <InventoryPage />
               </ProtectedRoute>
             }
           />

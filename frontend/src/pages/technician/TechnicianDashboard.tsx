@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { complaintApi } from '../../services/complaintApi';
 import { Complaint, Status } from '../../types';
 import { ComplaintCard } from '../../components/complaint/ComplaintCard';
@@ -65,9 +66,16 @@ export const TechnicianDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs">
-        <h1 className="text-xl font-bold text-slate-900 tracking-tight">Technician Workstation</h1>
-        <p className="text-xs text-slate-500 mt-0.5">Manage & resolve assigned department campus complaints</p>
+      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs flex justify-between items-center">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">Technician Workstation</h1>
+          <p className="text-xs text-slate-500 mt-0.5">Manage & resolve assigned department campus complaints</p>
+        </div>
+        <div className="flex gap-2">
+          <Link to="/technician/inventory" className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg font-semibold text-sm transition">
+            Inventory & Parts
+          </Link>
+        </div>
       </div>
 
       {/* Metrics */}

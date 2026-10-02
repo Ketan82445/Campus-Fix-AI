@@ -1,0 +1,9 @@
+# ERROR INVENTORY
+
+| ID | Severity | Location | Problem | Cause | Impact | Fix | Test | Status |
+|----|----------|----------|---------|-------|--------|-----|------|--------|
+| ERR-01 | CRITICAL | `backend/src/config/env.ts` | Default JWT_SECRET | Hardcoded default fallback `campusfix_super_secret_jwt_key_2026` was provided for JWT_SECRET and JWT_REFRESH_SECRET | If production environment missed setting variables, identical JWT keys would be used, exposing all sessions. | Removed `.default()`, enforced `.min(32)` via Zod schema. | Backend compilation and startup validation. | FIXED |
+| ERR-02 | MEDIUM | `backend/src/scripts/simulate.ts` | Invalid arguments for `createComplaint` | `ComplaintService.createComplaint` expected `creator` payload instead of `complaintData` | E2E simulation script failed | Updated arguments to match the API interface. | Ran `simulate.ts` successfully. | FIXED |
+| ERR-03 | LOW | `frontend/src/pages/technician/InventoryPage.tsx` | Build failure for `title` on SVG | `AlertTriangle` didn't explicitly support `title` prop in TypeScript build | Frontend build failed (`vite build`) | Removed `title` prop. | Ran `npm run build` | FIXED |
+| ERR-04 | LOW | `backend/tests/*.test.ts` | Connection timeout on test DB | `aws-0-ap-northeast-2.pooler.supabase.com:6543` timeout | E2E Tests failing randomly due to pooler limits | Expected behavior in CI without direct local DB. | Network verified | NOT TESTED (Locally restricted) |
+| ERR-05 | HIGH | `backend/src/controllers/workOrderController.ts` | `workOrder.description` null error | WorkOrders use `notes` not `description`. AI Troubleshooting crashed | Troubleshooting failed to parse text | Added `workOrder.notes || workOrder.complaint?.description` fallback logic. | Simulation script caught the AI prompt successfully | FIXED |

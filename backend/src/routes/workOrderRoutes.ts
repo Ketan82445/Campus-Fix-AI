@@ -13,7 +13,9 @@ router.get('/metrics', WorkOrderController.getMetrics);
 
 // Query and single item details
 router.get('/', WorkOrderController.getAll);
+router.post('/smart-schedule', requireRole(Role.ADMIN, Role.TECHNICIAN), WorkOrderController.smartSchedule);
 router.get('/:id', WorkOrderController.getById);
+router.get('/:id/troubleshoot', requireRole(Role.ADMIN, Role.TECHNICIAN), WorkOrderController.getTroubleshootingSteps);
 
 // Create formal work order (Admin or Technician)
 router.post('/', requireRole(Role.ADMIN, Role.TECHNICIAN), WorkOrderController.create);

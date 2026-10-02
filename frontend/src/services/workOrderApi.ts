@@ -24,9 +24,17 @@ export const workOrderApi = {
     return api.get('/work-orders/metrics');
   },
 
+  smartSchedule: async (data: { priority?: string, category?: string }): Promise<ApiResponse<{ estimatedHours: number, scheduledAt: string }>> => {
+    return api.post('/work-orders/smart-schedule', data);
+  },
+
   // Get a single work order
   getById: async (id: string): Promise<ApiResponse<WorkOrder>> => {
     return api.get(`/work-orders/${id}`);
+  },
+
+  getTroubleshooting: async (id: string): Promise<ApiResponse<{ steps: string[] }>> => {
+    return api.get(`/work-orders/${id}/troubleshoot`);
   },
 
   // Update general work order details

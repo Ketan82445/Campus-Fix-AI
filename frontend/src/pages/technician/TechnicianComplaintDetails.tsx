@@ -23,12 +23,21 @@ export const TechnicianComplaintDetails: React.FC = () => {
   const [statusReason, setStatusReason] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [assetHistory, setAssetHistory] = useState<Complaint[]>([]);
 
   const fetchComplaint = async () => {
     if (!id) return;
     try {
       const res = await complaintApi.getById(id);
-      if (res.success && res.data) setComplaint(res.data);
+      if (res.success && res.data) {
+        setComplaint(res.data);
+        if (res.data.room || res.data.location) {
+          const histRes = await complaintApi.getMany({ search: res.data.room || res.data.location, limit: 5 });
+          if (histRes.success && histRes.data) {
+            setAssetHistory(histRes.data.items.filter((c: Complaint) => c.id !== id));
+          }
+        }
+      }
     } catch {
       // ignore
     } finally {
@@ -222,6 +231,26 @@ export const TechnicianComplaintDetails: React.FC = () => {
           workOrder={complaint.workOrder} 
           onUpdate={fetchComplaint} 
         />
+      )}
+
+      {assetHistory.length > 0 && (
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-500" /> Similar Asset History
+          </h3>
+          <p className="text-xs text-slate-500">Other issues reported in <strong>{complaint.room || complaint.location}</strong>:</p>
+          <div className="space-y-2">
+            {assetHistory.map(h => (
+              <a key={h.id} href={`/technician/complaints/${h.id}`} className="block p-3 rounded-lg border border-slate-200 hover:border-brand-300 hover:bg-slate-50 transition text-xs">
+                <div className="flex justify-between font-bold mb-1">
+                  <span>{h.complaintNumber}: {h.title}</span>
+                  <StatusBadge status={h.status} />
+                </div>
+                <div className="text-slate-500 line-clamp-1">{h.description}</div>
+              </a>
+            ))}
+          </div>
+        </div>
       )}
 
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4">

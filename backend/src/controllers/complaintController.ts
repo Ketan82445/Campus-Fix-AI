@@ -13,8 +13,38 @@ import {
 } from '../validators/complaintValidator';
 import { StorageService } from '../services/storageService';
 import { Sanitizer } from '../utils/sanitizer';
+import { AIClientService } from '../services/aiClientService';
+import { ChatService } from '../services/chatService';
 
 export class ComplaintController {
+  public static async analyze(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { title, description, location } = req.body;
+      const cleanTitle = Sanitizer.sanitizeText(title);
+      const cleanDescription = Sanitizer.sanitizeText(description);
+      const cleanLocation = Sanitizer.sanitizeText(location);
+
+      const aiResult = await AIClientService.predictComplaint(cleanTitle, cleanDescription, cleanLocation);
+      return sendSuccess(res, aiResult, 'AI analysis completed', 200);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public static async analyzeImage(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { fileData, mimeType } = req.body;
+      if (!fileData || !mimeType) {
+        throw new AppError('Image data required', 400);
+      }
+      
+      const tags = await ChatService.analyzeImage(fileData, mimeType);
+      return sendSuccess(res, { tags }, 'Image analyzed', 200);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   public static async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const validated = createComplaintSchema.parse(req.body);
@@ -180,6 +210,16 @@ export class ComplaintController {
       const { id } = req.params;
       const result = await ComplaintService.toggleUpvote(id, req.user!);
       return sendSuccess(res, result, result.message);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public static async follow(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const complaint = await ComplaintService.followComplaint(id, req.user!.id);
+      return sendSuccess(res, complaint, 'Successfully followed complaint');
     } catch (error) {
       next(error);
     }

@@ -4,6 +4,53 @@ import { prisma } from '../config/prisma';
 import { AppError, UserPayload } from '../types';
 
 export class ChatService {
+  public static async analyzeImage(base64Image: string, mimeType: string): Promise<string[]> {
+    const geminiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!geminiKey) return [];
+    
+    try {
+      const genAI = new GoogleGenerativeAI(geminiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      
+      const prompt = "Analyze this image from a campus maintenance perspective. Identify 2 to 4 very short tags (1-3 words max) describing the possible issue (e.g. 'Water leak', 'Broken furniture', 'Electrical damage'). Return ONLY a comma-separated list of tags, nothing else.";
+      const imageParts = [{ inlineData: { data: base64Image.split(',')[1], mimeType } }];
+      
+      const result = await model.generateContent([prompt, ...imageParts]);
+      const response = await result.response;
+      return response.text().split(',').map(s => s.trim()).filter(Boolean);
+    } catch (err) {
+      console.error('Vision AI error:', err);
+      return [];
+    }
+  }
+
+  public static async generateTroubleshootingSteps(description: string, category: string): Promise<string[]> {
+    const geminiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!geminiKey) return ['Inspect the area.', 'Check for visible damage.', 'Verify power/water supply.', 'Escalate if unresolved.'];
+    
+    try {
+      const genAI = new GoogleGenerativeAI(geminiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      
+      const prompt = `You are a senior campus maintenance engineer. Based on the following complaint description and category, provide 3 to 5 clear, concise, actionable troubleshooting steps for a junior technician. \nCategory: ${category}\nDescription: ${description}\nReturn ONLY a JSON array of strings. Do not include markdown formatting or backticks.`;
+      
+      const result = await model.generateContent(prompt);
+      const responseText = (await result.response).text().trim();
+      const cleanedText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+      
+      try {
+        const steps = JSON.parse(cleanedText);
+        return Array.isArray(steps) ? steps : [];
+      } catch (e) {
+        // Fallback parsing
+        return cleanedText.split('\n').map(s => s.replace(/^\d+\.\s*/, '').replace(/^- /, '').replace(/["]/g, '').trim()).filter(Boolean);
+      }
+    } catch (err) {
+      console.error('Troubleshooting AI error:', err);
+      return ['Inspect the area.', 'Check for visible damage.', 'Verify power/water supply.', 'Escalate if unresolved.'];
+    }
+  }
+
   public static async processChat(user: UserPayload, messages: any[]) {
     const geminiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
     if (!geminiKey) {

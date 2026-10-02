@@ -5,12 +5,50 @@ import { StorageService } from '../services/storageService';
 import { Sanitizer } from '../utils/sanitizer';
 import { AuthenticatedRequest, AppError } from '../types';
 
+import { ChatService } from '../services/chatService';
+
 export class WorkOrderController {
+  public static async getTroubleshootingSteps(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const workOrder = await WorkOrderService.getWorkOrderById(req.params.id, req.user!);
+      if (!workOrder) throw new AppError('Work Order not found', 404);
+      const steps = await ChatService.generateTroubleshootingSteps(workOrder.notes || workOrder.complaint?.description || 'No description', workOrder.complaint?.category || 'OTHER');
+      return sendSuccess(res, { steps }, 'Generated steps');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public static async smartSchedule(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { priority, category } = req.body;
+      let estimatedHours = 2; // Default
+      
+      if (priority === 'CRITICAL') estimatedHours = 4;
+      else if (priority === 'HIGH') estimatedHours = 3;
+      else if (priority === 'LOW') estimatedHours = 1;
+
+      if (category === 'IT_NETWORK' || category === 'ELECTRICAL') estimatedHours += 1;
+      
+      const suggestedTime = new Date();
+      suggestedTime.setHours(suggestedTime.getHours() + 1); // Suggest starting in 1 hour
+      
+      return sendSuccess(res, { 
+        estimatedHours,
+        scheduledAt: suggestedTime.toISOString()
+      }, 'Suggested schedule generated');
+    } catch (error) {
+      next(error);
+    }
+  }
+
   public static async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) throw new AppError('Unauthorized', 401);
       const data = { ...req.body };
-      if (data.description) data.description = Sanitizer.sanitizeText(data.description);
+      if (data.description && !data.notes) {
+        data.notes = data.description;
+      }
       if (data.notes) data.notes = Sanitizer.sanitizeText(data.notes);
       const workOrder = await WorkOrderService.createWorkOrder(data, req.user);
       return sendSuccess(res, workOrder, 'Work order created successfully', 201);

@@ -22,6 +22,28 @@ export const complaintApi = {
     return api.post('/complaints', data);
   },
 
+  analyze: async (data: {
+    title: string;
+    description: string;
+    location: string;
+  }): Promise<ApiResponse<{
+    category: Category;
+    priority: Priority;
+    department: string;
+    confidence: number;
+    indicators: string[];
+    success: boolean;
+  }>> => {
+    return api.post('/complaints/analyze', data);
+  },
+
+  analyzeImage: async (data: {
+    fileData: string;
+    mimeType: string;
+  }): Promise<ApiResponse<{ tags: string[] }>> => {
+    return api.post('/complaints/analyze-image', data);
+  },
+
   uploadAttachment: async (data: {
     fileName: string;
     fileData: string;
@@ -50,6 +72,12 @@ export const complaintApi = {
     complaintId: string
   ): Promise<ApiResponse<{ upvoted: boolean; upvoteCount: number; message: string }>> => {
     return api.post(`/complaints/${complaintId}/upvote`);
+  },
+
+  follow: async (
+    complaintId: string
+  ): Promise<ApiResponse<{ following: boolean; message: string }>> => {
+    return api.post(`/complaints/${complaintId}/follow`);
   },
 
   markDuplicate: async (

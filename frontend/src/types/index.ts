@@ -311,7 +311,7 @@ export interface Incident {
 }
 
 
-export type WorkOrderStatus = 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD' | 'COMPLETED' | 'CANCELLED';
+export type WorkOrderStatus = 'CREATED' | 'ASSIGNED' | 'SCHEDULED' | 'ACKNOWLEDGED' | 'IN_PROGRESS' | 'WAITING_FOR_PARTS' | 'WAITING_FOR_APPROVAL' | 'RESOLVED' | 'VERIFIED' | 'CLOSED' | 'CANCELLED';
 
 export interface WorkOrderPart {
   id: string;

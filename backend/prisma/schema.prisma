@@ -39,6 +39,7 @@ enum Priority {
 }
 
 enum Status {
+  DRAFT
   SUBMITTED
   AI_ANALYZING
   AI_REVIEW_REQUIRED
@@ -79,6 +80,7 @@ model User {
   auditLogs            AuditLog[]
   comments             ComplaintComment[]
   upvotes              ComplaintUpvote[]
+  followedComplaints   ComplaintFollower[]
   feedbacks            ComplaintFeedback[]
   maintenances         AssetMaintenance[]
   assignedWorkOrders   WorkOrder[]         @relation("WorkOrderTechnician")
@@ -152,6 +154,7 @@ model Complaint {
   upvotes       ComplaintUpvote[]
   feedback      ComplaintFeedback?
   workOrder     WorkOrder?
+  followers     ComplaintFollower[]
 
   incidentId String?
   incident   Incident? @relation(fields: [incidentId], references: [id], onDelete: SetNull)
@@ -373,6 +376,19 @@ model ComplaintComment {
   createdAt   DateTime  @default(now())
 
   @@index([complaintId])
+}
+
+model ComplaintFollower {
+  id          String    @id @default(uuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([complaintId, studentId])
+  @@index([complaintId])
+  @@index([studentId])
 }
 
 model SLAConfig {

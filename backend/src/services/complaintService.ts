@@ -362,6 +362,7 @@ export class ComplaintService {
     }
 
     const validTransitions: Record<Status, Status[]> = {
+      [Status.DRAFT]: [Status.SUBMITTED],
       [Status.SUBMITTED]: [Status.AI_ANALYZING, Status.ASSIGNED, Status.AI_REVIEW_REQUIRED, Status.REJECTED],
       [Status.AI_ANALYZING]: [Status.ASSIGNED, Status.AI_REVIEW_REQUIRED, Status.REJECTED],
       [Status.AI_REVIEW_REQUIRED]: [Status.ASSIGNED, Status.REJECTED],
@@ -650,6 +651,22 @@ export class ComplaintService {
         ? 'You have been marked as affected by this issue. You will receive updates.'
         : 'Your confirmation has been removed.'
     };
+  }
+
+  public static async followComplaint(complaintId: string, studentId: string) {
+    const existing = await prisma.complaintFollower.findUnique({
+      where: { complaintId_studentId: { complaintId, studentId } }
+    });
+
+    if (existing) {
+      await prisma.complaintFollower.delete({ where: { id: existing.id } });
+      return { following: false, message: 'Unfollowed issue successfully.' };
+    } else {
+      await prisma.complaintFollower.create({
+        data: { complaintId, studentId }
+      });
+      return { following: true, message: 'You are now following this issue. You will receive notifications when the status changes.' };
+    }
   }
 
   /**

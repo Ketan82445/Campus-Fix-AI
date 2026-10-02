@@ -104,7 +104,21 @@ export const CreateWorkOrderModal: React.FC<Props> = ({ complaintId, onClose, on
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">Est. Hours</label>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">Est. Hours</label>
+                <button 
+                  type="button" 
+                  onClick={async () => {
+                    const res = await workOrderApi.smartSchedule({ priority: formData.priority });
+                    if (res.success && res.data) {
+                      setFormData(prev => ({ ...prev, estimatedHours: res.data!.estimatedHours.toString() }));
+                    }
+                  }}
+                  className="text-[10px] bg-indigo-50 text-indigo-600 font-bold px-2 py-0.5 rounded hover:bg-indigo-100"
+                >
+                  AI Suggest
+                </button>
+              </div>
               <div className="relative">
                 <Clock className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                 <input

@@ -20,6 +20,7 @@ export const SimilarComplaintsBanner: React.FC<SimilarComplaintsBannerProps> = (
   );
   const [actionInProgressId, setActionInProgressId] = useState<string | null>(null);
   const [confirmedIds, setConfirmedIds] = useState<Record<string, boolean>>({});
+  const [followedIds, setFollowedIds] = useState<Record<string, boolean>>({});
   const navigate = useNavigate();
 
   if (similarComplaints.length === 0) return null;
@@ -34,6 +35,20 @@ export const SimilarComplaintsBanner: React.FC<SimilarComplaintsBannerProps> = (
       }
     } catch (err) {
       console.error('Failed to upvote complaint:', err);
+    } finally {
+      setActionInProgressId(null);
+    }
+  };
+
+  const handleFollow = async (comp: SimilarComplaint) => {
+    try {
+      setActionInProgressId(comp.id);
+      const res = await complaintApi.follow(comp.id);
+      if (res.success) {
+        setFollowedIds(prev => ({ ...prev, [comp.id]: res.data?.following || false }));
+      }
+    } catch (err) {
+      console.error('Failed to follow complaint:', err);
     } finally {
       setActionInProgressId(null);
     }
@@ -151,7 +166,15 @@ export const SimilarComplaintsBanner: React.FC<SimilarComplaintsBannerProps> = (
                   <p className="whitespace-pre-line bg-gray-50 p-2.5 rounded-md border border-gray-100">
                     {comp.description}
                   </p>
-                  <div className="flex justify-end">
+                  <div className="flex justify-between items-center mt-2">
+                    <button
+                      type="button"
+                      disabled={isLoading}
+                      onClick={() => handleFollow(comp)}
+                      className={`inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg border transition ${followedIds[comp.id] ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                    >
+                      {followedIds[comp.id] ? <><CheckCircle className="h-3 w-3" /> Following</> : '+ Follow Issue'}
+                    </button>
                     <button
                       type="button"
                       onClick={() => navigate(`/student/complaints/${comp.id}`)}
