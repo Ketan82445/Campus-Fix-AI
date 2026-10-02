@@ -170,7 +170,7 @@ export const ComplaintWizardPage: React.FC = () => {
       const recognition = new SpeechRecognition();
       recognition.lang = language === 'en' ? 'en-US' : language === 'hi' ? 'hi-IN' : 'mr-IN';
       recognition.continuous = false;
-      recognition.interimResults = true;
+      recognition.interimResults = false;
       
       recognition.onstart = () => setIsRecording(true);
       
