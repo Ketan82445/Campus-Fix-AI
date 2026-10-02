@@ -58,7 +58,7 @@ export const AdminAIReviewPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      await complaintApi.reviewAI(selectedComplaint.id, {
+      const res = await complaintApi.reviewAI(selectedComplaint.id, {
         category: overrideCategory,
         priority: overridePriority,
         departmentId: selectedDeptId,
@@ -66,8 +66,10 @@ export const AdminAIReviewPage: React.FC = () => {
         reviewReason
       });
 
+      if (res.success) {
+        setComplaints(prev => prev.filter(c => c.id !== selectedComplaint.id));
+      }
       setSelectedComplaint(null);
-      await fetchQueue();
     } catch {} finally {
       setIsSubmitting(false);
     }

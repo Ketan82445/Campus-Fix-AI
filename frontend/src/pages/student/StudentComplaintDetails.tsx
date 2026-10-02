@@ -47,8 +47,8 @@ export const StudentComplaintDetails: React.FC = () => {
     if (!id) return;
     setIsUpdating(true);
     try {
-      await complaintApi.updateStatus(id, 'CLOSED', 'Student confirmed resolution');
-      await fetchComplaint();
+      const res = await complaintApi.updateStatus(id, 'CLOSED', 'Student confirmed resolution');
+      if (res.success && res.data) setComplaint(res.data);
     } catch {
       // ignore
     } finally {
@@ -61,10 +61,10 @@ export const StudentComplaintDetails: React.FC = () => {
     if (!id || !reopenReason) return;
     setIsUpdating(true);
     try {
-      await complaintApi.reopen(id, reopenReason);
+      const res = await complaintApi.reopen(id, reopenReason);
+      if (res.success && res.data) setComplaint(res.data);
       setShowReopenModal(false);
       setReopenReason('');
-      await fetchComplaint();
     } catch {
       // ignore
     } finally {
@@ -76,9 +76,9 @@ export const StudentComplaintDetails: React.FC = () => {
     e.preventDefault();
     if (!id || !commentText.trim()) return;
     try {
-      await complaintApi.addComment(id, commentText);
+      const res = await complaintApi.addComment(id, commentText);
+      if (res.success && res.data) setComplaint(res.data);
       setCommentText('');
-      await fetchComplaint();
     } catch {
       // ignore
     }
@@ -87,8 +87,8 @@ export const StudentComplaintDetails: React.FC = () => {
   const handleDeleteAttachment = async (attachmentId: string) => {
     if (!id) return;
     try {
-      await complaintApi.deleteAttachment(id, attachmentId);
-      await fetchComplaint();
+      const res = await complaintApi.deleteAttachment(id, attachmentId);
+      if (res.success && res.data) setComplaint(res.data);
     } catch {
       // ignore
     }

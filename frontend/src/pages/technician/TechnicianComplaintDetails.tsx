@@ -53,9 +53,9 @@ export const TechnicianComplaintDetails: React.FC = () => {
     if (!id) return;
     setIsUpdating(true);
     try {
-      await complaintApi.updateStatus(id, newStatus, statusReason || `Technician set status to ${newStatus}`);
+      const res = await complaintApi.updateStatus(id, newStatus, statusReason || `Technician set status to ${newStatus}`);
+      if (res.success && res.data) setComplaint(res.data);
       setStatusReason('');
-      await fetchComplaint();
     } catch {
       // ignore
     } finally {
@@ -67,9 +67,9 @@ export const TechnicianComplaintDetails: React.FC = () => {
     e.preventDefault();
     if (!id || !commentText.trim()) return;
     try {
-      await complaintApi.addComment(id, commentText, isInternal);
+      const res = await complaintApi.addComment(id, commentText, isInternal);
+      if (res.success && res.data) setComplaint(res.data);
       setCommentText('');
-      await fetchComplaint();
     } catch {
       // ignore
     }

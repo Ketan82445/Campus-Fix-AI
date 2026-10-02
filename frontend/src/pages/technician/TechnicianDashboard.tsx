@@ -47,8 +47,10 @@ export const TechnicianDashboard: React.FC = () => {
 
   const handleUpdateStatus = async (id: string, newStatus: Status) => {
     try {
-      await complaintApi.updateStatus(id, newStatus, `Technician changed status to ${newStatus}`);
-      await fetchComplaints();
+      const res = await complaintApi.updateStatus(id, newStatus, `Technician changed status to ${newStatus}`);
+      if (res.success && res.data) {
+        setComplaints(prev => prev.map(c => c.id === id ? res.data! : c));
+      }
     } catch {}
   };
 
