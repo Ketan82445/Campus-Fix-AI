@@ -66,7 +66,8 @@ export class ComplaintService {
     const { responseDeadline, resolutionDeadline } = await SLAService.calculateDeadlines(priority, new Date());
 
     // 5. Execute DB Transaction
-    const complaint = await prisma.$transaction(async (tx) => {
+    const complaint = await prisma.$transaction(
+      async (tx) => {
       const createdComplaint = await tx.complaint.create({
         data: {
           complaintNumber,
@@ -127,7 +128,7 @@ export class ComplaintService {
       });
 
       return createdComplaint;
-    });
+    }, { maxWait: 10000, timeout: 20000 });
 
     // 5. Auto-assignment if high confidence & department exists
     if (!requireManualReview && targetDept) {
@@ -347,8 +348,13 @@ export class ComplaintService {
     }
 
     // Authorization checks
-    if (user.role === Role.STUDENT && newStatus !== Status.CLOSED && newStatus !== Status.REOPENED) {
-      throw new AppError('Students can only confirm resolution or reopen complaints', 403, 'FORBIDDEN');
+    if (user.role === Role.STUDENT) {
+      if (complaint.createdById !== user.id) {
+        throw new AppError('Access denied: You can only close or reopen your own complaints', 403, 'FORBIDDEN');
+      }
+      if (newStatus !== Status.CLOSED && newStatus !== Status.REOPENED) {
+        throw new AppError('Students can only confirm resolution or reopen complaints', 403, 'FORBIDDEN');
+      }
     }
 
     if (user.role === Role.TECHNICIAN && complaint.assignedTechnicianId !== user.id) {
@@ -412,7 +418,7 @@ export class ComplaintService {
       });
 
       return comp;
-    });
+    }, { maxWait: 10000, timeout: 20000 });
 
     // Send notifications
     if (newStatus === Status.RESOLVED) {

@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { ComplaintService } from '../services/complaintService';
 import { sendSuccess } from '../utils/response';
-import { AuthenticatedRequest } from '../types';
+import { AuthenticatedRequest, AppError } from '../types';
 import {
   createComplaintSchema,
   updateStatusSchema,
@@ -12,16 +12,21 @@ import {
   markDuplicateSchema
 } from '../validators/complaintValidator';
 import { StorageService } from '../services/storageService';
+import { Sanitizer } from '../utils/sanitizer';
 
 export class ComplaintController {
   public static async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const validated = createComplaintSchema.parse(req.body);
+      const cleanTitle = Sanitizer.sanitizeText(validated.title);
+      const cleanDescription = Sanitizer.sanitizeText(validated.description);
+      const cleanLocation = Sanitizer.sanitizeText(validated.location);
+
       const complaint = await ComplaintService.createComplaint(
         req.user!,
-        validated.title,
-        validated.description,
-        validated.location,
+        cleanTitle,
+        cleanDescription,
+        cleanLocation,
         validated.category,
         validated.priority,
         {
@@ -104,7 +109,11 @@ export class ComplaintController {
     try {
       const { id } = req.params;
       const { comment, isInternal } = req.body;
-      const newComment = await ComplaintService.addComment(id, req.user!, comment, isInternal);
+      const cleanComment = Sanitizer.sanitizeText(comment);
+      if (!cleanComment) {
+        throw new AppError('Comment text cannot be empty', 400);
+      }
+      const newComment = await ComplaintService.addComment(id, req.user!, cleanComment, isInternal);
       return sendSuccess(res, newComment, 'Comment added successfully', 201);
     } catch (error) {
       next(error);

@@ -2,13 +2,17 @@ import { Response, NextFunction } from 'express';
 import { WorkOrderService } from '../services/workOrderService';
 import { sendSuccess } from '../utils/response';
 import { StorageService } from '../services/storageService';
+import { Sanitizer } from '../utils/sanitizer';
 import { AuthenticatedRequest, AppError } from '../types';
 
 export class WorkOrderController {
   public static async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       if (!req.user) throw new AppError('Unauthorized', 401);
-      const workOrder = await WorkOrderService.createWorkOrder(req.body, req.user);
+      const data = { ...req.body };
+      if (data.description) data.description = Sanitizer.sanitizeText(data.description);
+      if (data.notes) data.notes = Sanitizer.sanitizeText(data.notes);
+      const workOrder = await WorkOrderService.createWorkOrder(data, req.user);
       return sendSuccess(res, workOrder, 'Work order created successfully', 201);
     } catch (error) {
       next(error);

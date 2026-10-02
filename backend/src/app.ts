@@ -23,40 +23,63 @@ import workOrderRoutes from './routes/workOrderRoutes';
 
 const app = express();
 
-// Trust proxy for Vercel deployment so rate limiter can read X-Forwarded-For properly
+// Trust proxy for Render/Vercel deployments so rate limiter can read client IP properly
 app.set('trust proxy', 1);
+app.disable('x-powered-by');
 
-// Security headers
-app.use(helmet());
+// Security headers with Helmet
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    dnsPrefetchControl: { allow: false },
+    frameguard: { action: 'deny' },
+    hidePoweredBy: true,
+    hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+    noSniff: true,
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
+  })
+);
 
-// CORS configuration
+// Restricted CORS configuration
+const allowedOrigins = [
+  env.FRONTEND_URL,
+  'https://campus-fix-ai-six.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173'
+].filter(Boolean);
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl) or localhost, or vercel apps
-      if (
-        !origin ||
-        origin.includes('localhost') ||
-        origin.includes('127.0.0.1') ||
+      // Allow requests with no origin (like mobile apps, server-to-server, curl)
+      if (!origin) return callback(null, true);
+
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
         origin.endsWith('.vercel.app') ||
-        origin === env.FRONTEND_URL
-      ) {
+        origin.startsWith('http://localhost:') ||
+        origin.startsWith('http://127.0.0.1:');
+
+      if (isAllowed) {
         callback(null, true);
       } else {
-        callback(null, true);
+        callback(new Error(`Origin ${origin} not allowed by CORS security policy`));
       }
     },
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
   })
 );
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// HTTP Request logging
+// HTTP Request logging (combined format in production, dev in local)
 if (env.NODE_ENV !== 'test') {
-  app.use(morgan('dev'));
+  app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 }
 
 // Rate limiting

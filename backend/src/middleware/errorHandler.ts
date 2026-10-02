@@ -24,6 +24,22 @@ export const errorHandler = (
     return sendError(res, 'Invalid or expired token', 401, 'UNAUTHORIZED');
   }
 
+  // Handle CORS rejection
+  if (err.message && err.message.includes('not allowed by CORS')) {
+    return sendError(res, 'Access denied by CORS policy', 403, 'CORS_FORBIDDEN');
+  }
+
+  // Handle Prisma Database Errors without leaking schema internals
+  if (err.code === 'P2002') {
+    return sendError(res, 'A record with this unique identifier already exists', 409, 'DUPLICATE_RECORD');
+  }
+  if (err.code === 'P2025') {
+    return sendError(res, 'The requested resource was not found', 404, 'NOT_FOUND');
+  }
+  if (err.code === 'P2003') {
+    return sendError(res, 'Invalid referenced resource', 400, 'FOREIGN_KEY_VIOLATION');
+  }
+
   // Preserve upstream API service unavailability messages (e.g. Gemini 503 High Demand)
   if (err.status === 503 || (err.message && err.message.includes('503 Service Unavailable'))) {
     return sendError(res, err.message, 503, 'SERVICE_UNAVAILABLE');
@@ -31,7 +47,9 @@ export const errorHandler = (
 
   return sendError(
     res,
-    process.env.NODE_ENV === 'production' ? 'An internal server error occurred' : err.message || 'Internal Server Error',
+    process.env.NODE_ENV === 'production'
+      ? 'An internal server error occurred'
+      : err.message || 'Internal Server Error',
     500,
     'INTERNAL_SERVER_ERROR'
   );

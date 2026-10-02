@@ -83,22 +83,48 @@ You have access to tools to look up real-time database information. ALWAYS use y
           else if (call.name === 'get_complaint_status') {
             const complaint = await prisma.complaint.findUnique({
               where: { complaintNumber: args.complaintNumber },
-              select: { status: true, title: true, priority: true, assignedTechnician: { select: { name: true } }, resolvedAt: true }
+              select: {
+                createdById: true,
+                status: true,
+                title: true,
+                priority: true,
+                assignedTechnician: { select: { name: true } },
+                resolvedAt: true
+              }
             });
-            functionResult = complaint ? { complaint } : { error: 'Complaint not found.' };
+
+            if (!complaint) {
+              functionResult = { error: 'Complaint not found.' };
+            } else if (user.role === 'STUDENT' && complaint.createdById !== user.id) {
+              functionResult = { error: 'Access denied: You can only check the status of your own complaints.' };
+            } else {
+              functionResult = {
+                complaint: {
+                  status: complaint.status,
+                  title: complaint.title,
+                  priority: complaint.priority,
+                  assignedTechnician: complaint.assignedTechnician,
+                  resolvedAt: complaint.resolvedAt
+                }
+              };
+            }
           }
           else if (call.name === 'check_inventory') {
-            const query = args.searchQuery;
-            const items = await prisma.inventoryItem.findMany({
-              where: query ? {
-                OR: [
-                  { name: { contains: query, mode: 'insensitive' } },
-                  { sku: { contains: query, mode: 'insensitive' } }
-                ]
-              } : undefined,
-              select: { sku: true, name: true, quantity: true }
-            });
-            functionResult = { items: items.length > 0 ? items : 'No items found matching that query.' };
+            if (user.role === 'STUDENT') {
+              functionResult = { error: 'Access denied: Only technicians and administrators can inspect inventory records.' };
+            } else {
+              const query = args.searchQuery;
+              const items = await prisma.inventoryItem.findMany({
+                where: query ? {
+                  OR: [
+                    { name: { contains: query, mode: 'insensitive' } },
+                    { sku: { contains: query, mode: 'insensitive' } }
+                  ]
+                } : undefined,
+                select: { sku: true, name: true, quantity: true }
+              });
+              functionResult = { items: items.length > 0 ? items : 'No items found matching that query.' };
+            }
           }
         } catch (error: any) {
           functionResult = { error: `Error executing tool: ${error.message}` };

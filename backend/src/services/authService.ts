@@ -29,7 +29,7 @@ export class AuthService {
         name: data.name,
         email: data.email.toLowerCase(),
         passwordHash,
-        role: data.role || Role.STUDENT,
+        role: Role.STUDENT,
         phone: data.phone,
         departmentId: data.departmentId || null
       },
