@@ -21,7 +21,7 @@ const envSchema = z.object({
   (data) => {
     // In production, enforce non-default secrets
     if (data.NODE_ENV === 'production') {
-      if (data.JWT_SECRET === 'campusfix_super_secret_jwt_key_2026') {
+      if (data.JWT_SECRET === 'this_is_a_very_secure_jwt_secret_that_is_32_characters_long' || data.JWT_SECRET === 'campusfix_super_secret_jwt_key_2026') {
         return false;
       }
     }
